@@ -150,10 +150,11 @@ export class TruckView {
     lid.setPosition(0, this.stage.blockTop + LID_RISE, -length / 2 - 0.03 + lidLength);
     const plate = new Node('Plate');
     const mr = plate.addComponent(MeshRenderer);
-    mr.mesh = roundedBox(width * LID_WIDTH, LID_THICKNESS, lidLength, 0.028);
-    mr.setMaterial(makeMaterial(hex, false, false, 0.45), 0);
-    lit(mr);
-    plate.setPosition(0, 0, -lidLength / 2);
+    const height = this.stage.blockH + LID_RISE + LID_THICKNESS;
+    mr.mesh = roundedBox(width * LID_WIDTH, height, lidLength, 0.028);
+    mr.setMaterial(makeMaterial(hex, false, true, 0.45), 0);
+    lit(mr, false);
+    plate.setPosition(0, (LID_THICKNESS - height) / 2, -lidLength / 2);
     lid.addChild(plate);
     lid.active = false;
     return lid;
