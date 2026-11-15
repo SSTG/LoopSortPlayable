@@ -1,0 +1,16 @@
+{
+  "name": "LoopSort",
+  "title": "Loop Sort",
+  "iosUrl": "",
+  "androidUrl": "",
+  "buildDir": "build/web-mobile",
+  "outDir": "build/playable",
+  "splashMs": 0,
+  "musicKbps": 48,
+  "soundKbps": 64,
+  "cubeMapSize": 32,
+  "networks": [
+    "applovin"
+  ],
+  "background": "#D4B5DE"
+}

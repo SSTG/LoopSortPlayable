@@ -1,0 +1,147 @@
+{
+  "ver": "2.3.14",
+  "importer": "fbx",
+  "imported": true,
+  "uuid": "3b567b28-d21e-4330-a3b2-82151775fd7c",
+  "files": [],
+  "subMetas": {
+    "c6e33": {
+      "importer": "gltf-mesh",
+      "uuid": "3b567b28-d21e-4330-a3b2-82151775fd7c@c6e33",
+      "displayName": "",
+      "id": "c6e33",
+      "name": "Cube.002.mesh",
+      "userData": {
+        "gltfIndex": 0,
+        "triangleCount": 56
+      },
+      "ver": "1.1.1",
+      "imported": true,
+      "files": [
+        ".bin",
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "8bf07": {
+      "importer": "gltf-material",
+      "uuid": "3b567b28-d21e-4330-a3b2-82151775fd7c@8bf07",
+      "displayName": "",
+      "id": "8bf07",
+      "name": "Surface.material",
+      "userData": {
+        "gltfIndex": 0
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "2da33": {
+      "importer": "gltf-material",
+      "uuid": "3b567b28-d21e-4330-a3b2-82151775fd7c@2da33",
+      "displayName": "",
+      "id": "2da33",
+      "name": "Side.material",
+      "userData": {
+        "gltfIndex": 1
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "b2f09": {
+      "importer": "gltf-material",
+      "uuid": "3b567b28-d21e-4330-a3b2-82151775fd7c@b2f09",
+      "displayName": "",
+      "id": "b2f09",
+      "name": "Ground Holder.material",
+      "userData": {
+        "gltfIndex": 2
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "b12cd": {
+      "importer": "gltf-material",
+      "uuid": "3b567b28-d21e-4330-a3b2-82151775fd7c@b12cd",
+      "displayName": "",
+      "id": "b12cd",
+      "name": "Ground.material",
+      "userData": {
+        "gltfIndex": 3
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "8bb62": {
+      "importer": "gltf-scene",
+      "uuid": "3b567b28-d21e-4330-a3b2-82151775fd7c@8bb62",
+      "displayName": "",
+      "id": "8bb62",
+      "name": "ConveyorUp.prefab",
+      "userData": {
+        "gltfIndex": 0
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    }
+  },
+  "userData": {
+    "imageMetas": [],
+    "fbx": {
+      "smartMaterialEnabled": true
+    },
+    "lods": {
+      "enable": false,
+      "hasBuiltinLOD": false,
+      "options": [
+        {
+          "screenRatio": 0.25,
+          "faceCount": 1
+        },
+        {
+          "screenRatio": 0.125,
+          "faceCount": 0.25
+        },
+        {
+          "screenRatio": 0.01,
+          "faceCount": 0.1
+        }
+      ]
+    },
+    "assetFinder": {
+      "meshes": [
+        "3b567b28-d21e-4330-a3b2-82151775fd7c@c6e33"
+      ],
+      "skeletons": [],
+      "textures": [],
+      "materials": [
+        "3b567b28-d21e-4330-a3b2-82151775fd7c@8bf07",
+        "3b567b28-d21e-4330-a3b2-82151775fd7c@2da33",
+        "3b567b28-d21e-4330-a3b2-82151775fd7c@b2f09",
+        "3b567b28-d21e-4330-a3b2-82151775fd7c@b12cd"
+      ],
+      "scenes": [
+        "3b567b28-d21e-4330-a3b2-82151775fd7c@8bb62"
+      ]
+    }
+  }
+}

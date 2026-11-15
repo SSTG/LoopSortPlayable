@@ -1,0 +1,28 @@
+{
+  "caption": "Harder than you think",
+  "tapsToRedirect": -1,
+  "truckCapacity": 3,
+  "beltCapacity": 10,
+  "colors": {
+    "M": "#F224F2",
+    "O": "#F2682A",
+    "W": "#FFF1F8"
+  },
+  "trucks": [
+    "OMM",
+    "OM",
+    "MMW",
+    "M"
+  ],
+  "belt": "WOW",
+  "beltPath": {
+    "points": [
+      [-2.2, 4.4],
+      [2.2, 4.4],
+      [2.2, 1],
+      [-2.2, 1]
+    ],
+    "radius": 1.1,
+    "width": 0.65
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "package_version": 2,
+  "name": "playable-build",
+  "version": "1.0.0",
+  "title": "Playable Ads Build",
+  "description": "Builds the game and packs it for the ad networks (AppLovin, Google Ads, Unity, ironSource, Meta, Mintegral, TikTok, Vungle).",
+  "author": "Loop Sort",
+  "editor": ">=3.8.0",
+  "main": "./main.js",
+  "panels": {
+    "default": {
+      "title": "Playable Ads Build",
+      "type": "dockable",
+      "main": "./panel.js",
+      "size": { "min-width": 380, "min-height": 480, "width": 460, "height": 680 }
+    }
+  },
+  "contributions": {
+    "menu": [
+      { "path": "Playable Ads", "label": "Build Settings...", "message": "open-panel" }
+    ],
+    "messages": {
+      "open-panel": { "methods": ["openPanel"] },
+      "get-state": { "methods": ["getState"] },
+      "save-settings": { "methods": ["saveSettings"] },
+      "run": { "methods": ["run"] },
+      "stop": { "methods": ["stop"] },
+      "open-output": { "methods": ["openOutput"] }
+    }
+  }
+}

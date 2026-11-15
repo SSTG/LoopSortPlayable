@@ -1,0 +1,168 @@
+CCEffect %{
+  techniques:
+  - passes:
+    - vert: toon-vs:vert
+      frag: toon-fs:frag
+      properties: &props
+        mainColor:   { value: [0.6, 0.6, 0.6, 1.0], target: baseColor, linear: true, editor: { type: color } }
+        highColor:   { value: [1.0, 1.0, 1.0, 1.0], linear: true, editor: { type: color } }
+        shadeColor:  { value: [0.4, 0.4, 0.4, 1.0], linear: true, editor: { type: color } }
+        specColor:   { value: [0.75, 0.75, 0.75, 1.0], linear: true, editor: { type: color } }
+        rampParams:  { value: [0.792, 0.149, 0.5, 0.39] }
+        ambientSky:     { value: [1.0, 1.0, 1.0, 1.0] }
+        ambientEquator: { value: [0.456, 0.456, 0.456, 1.0] }
+        ambientGround:  { value: [0.004, 0.004, 0.004, 1.0] }
+    - vert: shadow-caster-vs:vert
+      frag: shadow-caster-fs:frag
+      phase: shadow-caster
+      propertyIndex: 0
+      rasterizerState:
+        cullMode: front
+      properties: *props
+}%
+
+CCProgram shared-ubos %{
+  uniform Constants {
+    vec4 baseColor;
+    vec4 highColor;
+    vec4 shadeColor;
+    vec4 specColor;
+    vec4 rampParams;
+    vec4 ambientSky;
+    vec4 ambientEquator;
+    vec4 ambientGround;
+  };
+}%
+
+CCProgram toon-vs %{
+  precision highp float;
+  #include <legacy/input-standard>
+  #include <builtin/uniforms/cc-global>
+  #include <legacy/decode-base>
+  #include <legacy/local-batch>
+  #include <shared-ubos>
+  #include <legacy/shadow-map-vs>
+
+  out vec3 v_position;
+  out mediump vec3 v_normal;
+  #if CC_RECEIVE_SHADOW
+    out mediump vec2 v_shadowBias;
+  #endif
+
+  vec4 vert () {
+    StandardVertInput In;
+    CCVertInput(In);
+
+    mat4 matWorld, matWorldIT;
+    CCGetWorldMatrixFull(matWorld, matWorldIT);
+
+    vec4 pos = matWorld * In.position;
+    v_position = pos.xyz;
+    #if CC_RECEIVE_SHADOW
+      v_shadowBias = CCGetShadowBias();
+    #endif
+    v_normal = (matWorldIT * vec4(In.normal, 0.0)).xyz;
+
+    CC_TRANSFER_SHADOW(pos);
+    return cc_matProj * (cc_matView * matWorld) * In.position;
+  }
+}%
+
+CCProgram toon-fs %{
+  precision highp float;
+  #include <builtin/uniforms/cc-global>
+  #include <shared-ubos>
+  #include <legacy/output-standard>
+  #if CC_RECEIVE_SHADOW
+    #include <legacy/shadow-map-fs>
+  #endif
+
+  in vec3 v_position;
+  in mediump vec3 v_normal;
+  #if CC_RECEIVE_SHADOW
+    in mediump vec2 v_shadowBias;
+  #endif
+
+  vec4 frag () {
+    vec3 N = normalize(v_normal);
+    if (!gl_FrontFacing) N = -N;
+    vec3 L = normalize(-cc_mainLitDir.xyz);
+    vec3 V = normalize(cc_cameraPos.xyz - v_position);
+
+    float ndl = dot(N, L);
+    float wrapped = ndl * 0.5 + 0.5;
+    float ramp = smoothstep(rampParams.x - rampParams.y * 0.5, rampParams.x + rampParams.y * 0.5, wrapped);
+
+    float shadow = 1.0;
+    #if CC_RECEIVE_SHADOW && CC_SHADOW_TYPE == CC_SHADOW_MAP
+      if (cc_mainLitDir.w > 0.0) {
+        #if CC_DIR_LIGHT_SHADOW_TYPE == CC_DIR_LIGHT_SHADOW_CASCADED
+          shadow = CCCSMFactorBase(v_position, N, v_shadowBias);
+        #endif
+        #if CC_DIR_LIGHT_SHADOW_TYPE == CC_DIR_LIGHT_SHADOW_UNIFORM
+          shadow = CCShadowFactorBase(CC_SHADOW_POSITION, N, v_shadowBias);
+        #endif
+      }
+    #endif
+    ramp *= shadow;
+
+    vec3 light = cc_mainLitColor.rgb * rampParams.w;
+    vec3 color = baseColor.rgb * mix(shadeColor.rgb, highColor.rgb, ramp) * light;
+
+    vec3 ambient = N.y >= 0.0 ? mix(ambientEquator.rgb, ambientSky.rgb, N.y) : mix(ambientEquator.rgb, ambientGround.rgb, -N.y);
+    color += baseColor.rgb * ambient;
+
+    float nh = clamp(dot(N, normalize(L + V)), 0.0, 1.0);
+    float rough = rampParams.z * rampParams.z;
+    float a2 = rough * rough;
+    float d = (nh * a2 - nh) * nh + 1.0;
+    float spec = 0.31830988618 * a2 / (d * d + 1e-4) * 3.14159265359 * 0.05 / (rough * rough + 1.0);
+    color += spec * shadow * clamp(ndl, 0.0, 1.0) * light * specColor.rgb;
+
+    return CCFragOutput(vec4(color, 1.0));
+  }
+}%
+
+CCProgram shadow-caster-vs %{
+  precision highp float;
+  #include <legacy/input-standard>
+  #include <legacy/decode-base>
+  #include <legacy/local-batch>
+  #include <shared-ubos>
+  #include <builtin/uniforms/cc-shadow>
+
+  out vec4 v_worldPos;
+  out highp vec2 v_clip_depth;
+
+  vec4 vert () {
+    StandardVertInput In;
+    CCVertInput(In);
+
+    mat4 matWorld, matWorldIT;
+    CCGetWorldMatrixFull(matWorld, matWorldIT);
+
+    v_worldPos = matWorld * In.position;
+    vec4 clipPos = cc_matLightViewProj * v_worldPos;
+    v_clip_depth = clipPos.zw;
+    return clipPos;
+  }
+}%
+
+CCProgram shadow-caster-fs %{
+  precision highp float;
+  #include <shared-ubos>
+  #include <common/data/packing>
+  #include <legacy/shadow-map-base>
+
+  in vec4 v_worldPos;
+  in highp vec2 v_clip_depth;
+
+  vec4 frag () {
+    highp float clipDepth = v_clip_depth.x / v_clip_depth.y * 0.5 + 0.5;
+    #if CC_SHADOWMAP_FORMAT == SHADOWMAP_FORMAT_RGBA8
+      return packDepthToRGBA(clipDepth);
+    #else
+      return vec4(clipDepth, 1.0, 1.0, 1.0);
+    #endif
+  }
+}%
