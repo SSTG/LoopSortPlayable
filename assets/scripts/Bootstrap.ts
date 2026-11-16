@@ -1,7 +1,7 @@
 import { _decorator, Component, Camera, Vec3, geometry, sys } from 'cc';
 import { DEBUG } from 'cc/env';
 import type { GameState, GameEvent, LevelData } from './core/Rules';
-import { createState, tap, tick, load, canTap, topRun, isWon, isLost, isComplete, levelCaption, redirectDue } from './core/Rules';
+import { createState, tap, tick, load, canTap, tapCount, isWon, isLost, isComplete, levelCaption, redirectDue, beltLimit } from './core/Rules';
 import { buildLayout } from './core/Layout';
 import type { Layout } from './core/Layout';
 import { loadGameAssets } from './view/GameAssets';
@@ -47,7 +47,7 @@ export class Bootstrap extends Component {
   @property({ tooltip: 'Seconds the belt takes to move on by one block at full speed (a crowded belt is slower)' })
   beltTick = 0.45;
 
-  @property({ tooltip: 'Seconds without a tap before the pointing hand comes back' })
+  @property({ tooltip: 'Seconds of calm (no tap, no blocks dropping or flying) before the pointing hand shows, also at the start' })
   hintIdle = 3;
 
   @property({ tooltip: 'Share of the screen height kept clear of the level at the top, for the caption' })
@@ -87,7 +87,7 @@ export class Bootstrap extends Component {
     if (this.hud.fit()) { this.fitCamera(); this.hint.refresh(); }
     if (!this.ended) this.runBelt(dt);
     this.gameView.step(dt, this.ended ? 0 : this.clock.progress);
-    this.hud.setCounter(load(this.state), this.level.beltCapacity);
+    this.hud.setCounter(load(this.state), beltLimit(this.level));
     this.placeChecks();
     this.winHold = Math.max(0, this.winHold - dt);
     if (this.ended || this.checkEnd()) return;
@@ -190,7 +190,7 @@ export class Bootstrap extends Component {
     this.gameView.flushIncoming(truck);
     const stack = this.state.trucks[truck];
     const before = stack.length;
-    const colors = stack.slice(before - topRun(stack)).reverse();
+    const colors = stack.slice(before - tapCount(this.state, truck)).reverse();
     const events: GameEvent[] = [];
     tap(this.state, truck, events);
     this.gameView.eject(truck, colors, before);
@@ -202,9 +202,13 @@ export class Bootstrap extends Component {
   }
 
   private runBelt(dt: number) {
-    const ticks = this.clock.advance(dt, load(this.state), this.level.beltCapacity, this.beltTick);
+    const ticks = this.clock.advance(dt, load(this.state), beltLimit(this.level), this.beltTick);
     this.gameView.tickDur = this.beltTick / this.clock.speed;
-    for (let left = ticks - 1; left >= 0; left--) this.gameView.onEvents(tick(this.state), this.clock.progress + left);
+    for (let left = ticks - 1; left >= 0; left--) {
+      const events = tick(this.state);
+      if (events.some(e => e.type === 'drop')) this.hint.onActivity();
+      this.gameView.onEvents(events, this.clock.progress + left);
+    }
   }
 
   private checkEnd(): boolean {
@@ -229,6 +233,7 @@ export class Bootstrap extends Component {
   }
 
   private updateHint(dt: number) {
+    if (this.gameView.busy) this.hint.onActivity();
     const truck = this.hint.update(dt, this.state, this.hintIdle);
     this.hud.setHint(this.camera, truck >= 0 ? this.gameView.truckWorldPos(truck, this.tmp) : null);
   }

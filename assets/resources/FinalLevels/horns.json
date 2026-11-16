@@ -1,22 +1,28 @@
 {
-  "caption": "Harder than you think",
+  "caption": "Prove You're a Puzzle Master!",
   "tapsToRedirect": -1,
   "truckCapacity": 8,
   "beltCapacity": 23,
+  "beltLimit": 18,
   "colors": {
     "M": "#F224F2",
     "O": "#F2682A",
-    "W": "#FFF1F8"
+    "W": "#FFF1F8",
+    "B": "#3A7BF2"
   },
   "trucks": [
-    "WMWOWW",
-    "OMWWWWWW",
-    "OM",
-    "OMWMMMM",
-    "OMMOOMMM",
-    "MWMMWWWW"
+    "BWOWBOOO",
+    "WMBBBWBO",
+    "BOWMWMM",
+    "OMMWMMO"
   ],
-  "belt": "OOOOOOOOO",
+  "belt": "WB",
+  "truckPlaces": [
+    [0, 5.35, -90],
+    [-3.25, 1.45, 50],
+    [3.25, 1.45, 130],
+    [0, 0.08, 90]
+  ],
   "beltPath": {
     "points": [
       [-3.5, 7.6],

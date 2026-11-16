@@ -187,7 +187,8 @@
       "b": 172,
       "a": 255
     },
-    "impressionSize": 0.92,
+    "impressionGap": 0.05,
+    "impressionCorner": 0.07,
     "outlineRunTime": 0.45,
     "outlineThickness": 0.045,
     "lidTime": 0.6,
@@ -216,7 +217,7 @@
     },
     "_enabled": true,
     "__prefab": null,
-    "levelName": "level6",
+    "levelName": "FinalLevels/infinity",
     "storeUrl": "",
     "leaveImpression": true,
     "camera": {

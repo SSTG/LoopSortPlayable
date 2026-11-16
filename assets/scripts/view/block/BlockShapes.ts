@@ -6,12 +6,12 @@ import { roundOff, sliceBox } from '../mesh/BoxFit';
 import { turnPiece } from '../mesh/CubeTurns';
 import { roundedBox } from '../mesh/RoundedBox';
 import { cellScale } from './BlockGrid';
-import { PIECE_COLS, PIECE_LAYERS, PIECE_SLICES, PIECE_RULES, BLOCK_NATIVE, BLOCK_ROUND, IMPRESSION_OVAL } from '../ViewConfig';
+import { PIECE_COLS, PIECE_LAYERS, PIECE_SLICES, PIECE_RULES, BLOCK_NATIVE, BLOCK_ROUND } from '../ViewConfig';
 
 const RAW_MODELS = ['CubeBeveled', 'CubeCorner', 'CubeMiddle', 'CubeFlat', 'Block'];
 const CORNER_SIDES = [0, 3, 4];
 const EDGE_SIDES = [3, 4];
-const OVAL_STEPS = 48;
+const CORNER_STEPS = 8;
 
 const modelGeo = (model: Prefab): Geo => firstPart(bake(model));
 
@@ -21,7 +21,7 @@ export class BlockShapes {
   private rawGeo: Record<string, Geo> = {};
   private pieceGeos: Record<string, Geo> = {};
   private pieceMeshes: (Mesh | null)[] = [];
-  private ovalMeshes: Record<string, Mesh> = {};
+  private plateMeshes: Record<string, Mesh> = {};
   private tmp = new Vec3();
 
   constructor(private stage: Stage, models: Record<string, Prefab>) {
@@ -48,18 +48,24 @@ export class BlockShapes {
     return this.pieceMeshes[mask] || (this.pieceMeshes[mask] = toMesh(this.pieceGeo(mask)));
   }
 
-  ovalPlate(w: number, l: number): Mesh {
-    const key = w.toFixed(3) + '_' + l.toFixed(3);
-    if (this.ovalMeshes[key]) return this.ovalMeshes[key];
-    const e = 2 / IMPRESSION_OVAL;
+  // Flat rectangle w x l (x by z) lying face up, its corners rounded to radius r.
+  roundedPlate(w: number, l: number, r: number): Mesh {
+    r = Math.max(0, Math.min(r, w / 2, l / 2));
+    const key = w.toFixed(3) + '_' + l.toFixed(3) + '_' + r.toFixed(3);
+    if (this.plateMeshes[key]) return this.plateMeshes[key];
     const positions = [0, 0, 0], normals = [0, 1, 0], indices: number[] = [];
-    for (let k = 0; k < OVAL_STEPS; k++) {
-      const a = (k / OVAL_STEPS) * Math.PI * 2, c = Math.cos(a), sn = Math.sin(a);
-      positions.push(Math.sign(c) * Math.pow(Math.abs(c), e) * w / 2, 0, -Math.sign(sn) * Math.pow(Math.abs(sn), e) * l / 2);
-      normals.push(0, 1, 0);
-      indices.push(0, 1 + k, 1 + (k + 1) % OVAL_STEPS);
-    }
-    return (this.ovalMeshes[key] = utils.MeshUtils.createMesh({ positions, normals, indices }));
+    const hx = w / 2 - r, hz = l / 2 - r;
+    const corners = [[hx, -hz], [-hx, -hz], [-hx, hz], [hx, hz]];
+    corners.forEach(([cx, cz], q) => {
+      for (let k = 0; k <= CORNER_STEPS; k++) {
+        const a = (q + k / CORNER_STEPS) * Math.PI / 2;
+        positions.push(cx + Math.cos(a) * r, 0, cz - Math.sin(a) * r);
+        normals.push(0, 1, 0);
+      }
+    });
+    const n = positions.length / 3 - 1;
+    for (let k = 0; k < n; k++) indices.push(0, 1 + k, 1 + (k + 1) % n);
+    return (this.plateMeshes[key] = utils.MeshUtils.createMesh({ positions, normals, indices }));
   }
 
   private pieceGeo(mask: number): Geo {

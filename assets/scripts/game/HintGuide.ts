@@ -2,7 +2,6 @@ import type { GameState } from '../core/Rules';
 import { cloneState } from '../core/Rules';
 import { solveFrom, settle } from '../core/Solver';
 
-const FIRST_HINT_DELAY = 0.6;
 const SOLVER_BUDGET = 30000;
 const NONE = -1;
 const NO_MOVE = -2;
@@ -28,13 +27,21 @@ export class HintGuide {
     this.tapped = true;
   }
 
+  // Blocks moving on their own (dropping or flying into a truck) are activity too: hide the hand and restart the wait.
+  onActivity() {
+    this.idle = 0;
+    this.dirty = true;
+    this.truck = NONE;
+  }
+
   refresh() {
     this.dirty = true;
   }
 
   update(dt: number, state: GameState, idleBeforeHint: number): number {
     this.idle += dt;
-    const wanted = this.tapped ? this.idle >= idleBeforeHint : this.idle > FIRST_HINT_DELAY && this.openingDone(state);
+    // Always idleBeforeHint seconds of calm first; before the first tap, also wait for the opening cubes to settle.
+    const wanted = this.idle >= idleBeforeHint && (this.tapped || this.openingDone(state));
     if (wanted && this.dirty) {
       this.dirty = false;
       const solution = solveFrom(state, SOLVER_BUDGET);

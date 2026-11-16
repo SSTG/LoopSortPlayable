@@ -1,8 +1,9 @@
 {
-  "caption": "Harder than you think",
+  "caption": "Only 10% Can Beat This Level!",
   "tapsToRedirect": -1,
   "truckCapacity": 7,
   "beltCapacity": 24,
+  "beltLimit": 17,
   "colors": {
     "M": "#F224F2",
     "O": "#F2682A",

@@ -1,4 +1,5 @@
 import type { LevelData } from './Level';
+import { beltLimit } from './Level';
 
 export function validateLevel(l: LevelData): void {
   if (!l.trucks || l.trucks.length === 0) throw new Error('Level needs at least one truck');
@@ -32,6 +33,9 @@ export function validateLevel(l: LevelData): void {
     check(t, `Truck ${i + 1}`);
   });
   if (l.belt.length > l.beltCapacity) throw new Error(`Belt holds ${l.belt.length} units, beltCapacity is ${l.beltCapacity}`);
+  const lim = l.beltLimit;
+  if (lim !== undefined && !(Number.isInteger(lim) && lim > 0 && lim <= l.beltCapacity)) throw new Error(`beltLimit must be a whole number from 1 to beltCapacity (${l.beltCapacity})`);
+  if (l.belt.length > beltLimit(l)) throw new Error(`Belt holds ${l.belt.length} units, beltLimit is ${beltLimit(l)}`);
   check(l.belt, 'Belt');
 }
 

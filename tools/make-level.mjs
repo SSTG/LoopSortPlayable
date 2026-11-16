@@ -17,6 +17,7 @@ const SPARE = 0;
 if (arg('spare', 0) !== 0) fail('--spare is gone: every truck must end up full, so a level has no spare room');
 const MIX = arg('mix', 40);
 const MINLOAD = arg('minload', 0);
+const LIMIT = arg('limit', 0);
 let seed = arg('seed', 1) >>> 0;
 const rnd = () => { seed = (seed + 0x6d2b79f5) >>> 0; let t = seed; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
 
@@ -91,6 +92,8 @@ if (!beltFits({ beltCapacity: BELT, beltPath: { ...SHAPES[SHAPE], width: WIDTH }
 if (ONBELT < 0) ONBELT = Math.max(0, BELT - 2);
 if (N > BELT) fail('each truck needs its own belt slot: trucks must be <= belt');
 if (ONBELT > BELT) fail('onbelt must be <= belt');
+if (LIMIT > BELT) fail('--limit must be <= the belt capacity');
+if (LIMIT && ONBELT > LIMIT) ONBELT = LIMIT;
 if (ONBELT > N * (CAP - 1)) fail(`onbelt (${ONBELT}) must be <= trucks * (capacity - 1) (${N * (CAP - 1)})`);
 if (!(WIDTH > 0)) fail('--width needs a positive number');
 const PLACES = text('places') === null ? null : text('places').split(';').map(p => p.split(',').map(Number));
@@ -115,7 +118,7 @@ for (let attempt = 0; attempt < 300; attempt++) {
   }
   const level = {
     caption: 'Harder than you think', tapsToRedirect: -1,
-    truckCapacity: CAP, beltCapacity: BELT,
+    truckCapacity: CAP, beltCapacity: BELT, ...(LIMIT ? { beltLimit: LIMIT } : {}),
     colors: Object.fromEntries(PALETTE.slice(0, K)),
     trucks: trucks.map(t => t.join('')), belt: belt.join(''),
     ...(PLACES ? { truckPlaces: PLACES } : {}),

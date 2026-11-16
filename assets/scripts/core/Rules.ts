@@ -1,4 +1,5 @@
 import type { LevelData } from './Level';
+import { beltLimit } from './Level';
 import { validateLevel } from './LevelCheck';
 
 export * from './Level';
@@ -86,7 +87,12 @@ export function isComplete(s: GameState, truck: number): boolean {
 export function canTap(s: GameState, truck: number): boolean {
   const t = s.trucks[truck];
   if (!t || t.length === 0 || isWon(s) || isComplete(s, truck)) return false;
-  return topRun(t) <= s.ring.length - load(s);
+  return beltLimit(s.level) - load(s) > 0;
+}
+
+// How many blocks a tap sends: the whole top run, or as many as the belt has room for (the rest stay in the truck).
+export function tapCount(s: GameState, truck: number): number {
+  return Math.max(0, Math.min(topRun(s.trucks[truck]), beltLimit(s.level) - load(s)));
 }
 
 function accepts(s: GameState, truck: number, color: string): boolean {
@@ -112,7 +118,7 @@ function resolveGates(s: GameState, events: GameEvent[] | undefined, skipTruck: 
 export function tap(s: GameState, truck: number, events?: GameEvent[]): boolean {
   if (!canTap(s, truck)) return false;
   const t = s.trucks[truck];
-  const n = topRun(t), size = s.ring.length;
+  const n = tapCount(s, truck), size = s.ring.length;
   for (let k = 0; k < n; k++) {
     const color = t.pop() as string;
     const gate = slotAtGate(s, truck);
@@ -125,10 +131,11 @@ export function tap(s: GameState, truck: number, events?: GameEvent[]): boolean 
     }
     s.ring[gate] = color;
     if (events) events.push({ type: 'enter', truck, slot: gate, color });
+    // Each entering block pushes the ones ahead along by a slot, so offer them to the trucks they are pushed past
+    // now; otherwise a run longer than the gap to the next truck would skip that truck.
+    resolveGates(s, events, truck);
   }
   s.quiet = 0;
-
-  resolveGates(s, events, truck);
   return true;
 }
 

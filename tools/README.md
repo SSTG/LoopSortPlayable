@@ -9,6 +9,7 @@ Levels live in `assets/resources/levels/*.json`. The `Bootstrap` component on th
   "tapsToRedirect": -1,                // the store opens on this tap and every later one; -1 = only when the level is completed
   "truckCapacity": 15,                 // units one truck can hold
   "beltCapacity": 16,                  // units the belt can hold (the x/16 counter)
+  "beltLimit": 12,                     // optional: most units allowed on the belt (the x/12 counter); default beltCapacity
   "colors": { "M": "#F224F2", "O": "#F2682A", "W": "#FFF1F8" },
   "trucks": ["OMMW", "W", "..."],      // one string per truck, bottom -> top, one letter per unit
   "belt": "OWWO",                      // units riding the belt at the start
@@ -44,6 +45,10 @@ only writes levels that obey this, so the belt may start with fewer cubes than `
 in `core/Layout.ts`; anything from 1.15 to 1.4 passes) - so that a full counter means a belt packed with cubes.
 The check fails a level that is off and says what capacity suits its belt; `make-level.mjs` picks the capacity
 from the shape when `--belt` is left out. A lengthened or shortened belt needs its `beltCapacity` changed to match.
+To make a level harder without thinning out the belt, keep `beltCapacity` (the number of slots, matched to the
+belt's length) and set a lower `beltLimit`: the counter, the slow-down and how many blocks a tap may send all use
+the limit. A tap sends the truck's whole top run of one colour, or only as many as still fit under the limit (the rest
+stay in the truck); a tap on a full belt is refused. It must be a whole number from 1 to `beltCapacity`, and the starting belt must fit under it.
 The belt also slows down as it fills: above 70% full it eases down to a third of its speed when packed.
 
 It plays every level with the game's own rules and prints one winning tap sequence (each tap made once the belt has settled; in-game hints re-solve from wherever the player is), or `UNSOLVABLE`
@@ -55,7 +60,7 @@ To generate a new solvable level:
       --onbelt 14 --mix 120 --seed 1 > assets/resources/levels/level2.json
 
 `--mix` = how scrambled, `--onbelt` = blocks that start on the belt, `--minload` = minimum belt
-load once the opening cubes have settled.
+load once the opening cubes have settled. `--limit` writes `beltLimit` (most blocks allowed on the belt) and builds the level around it.
 
 A level is won only when **every truck is full of one colour**, so its blocks (in the trucks plus on the belt)
 must fill the trucks exactly: each colour a whole number of truckloads, trucks x `truckCapacity` blocks in all.

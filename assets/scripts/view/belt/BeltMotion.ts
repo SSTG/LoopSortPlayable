@@ -51,6 +51,13 @@ export class BeltMotion {
     return Math.min(d * this.stage.state.ring.length * tickDur, tickDur * MAX_WAIT_TICKS);
   }
 
+  // True once the cube, riding the belt, has reached (or just passed) the gate at gateF.
+  atGate(c: Cube, visualOffset: number, gateF: number): boolean {
+    let d = gateF - this.fraction(c, visualOffset);
+    d -= Math.floor(d);
+    return d > PASSED_GATE;
+  }
+
   tumble(c: Cube, dt: number) {
     const a = Math.atan2(c.ty, c.tx);
     let turn = isNaN(c.ang) ? 0 : a - c.ang;

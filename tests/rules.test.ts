@@ -47,8 +47,15 @@ test('a block does not fall straight back into the truck it was tapped out of', 
   assert.deepEqual(s.trucks[0], []);
   assert.equal(load(s), 1);
 });
-test('tap is refused when the run does not fit on the belt', () => {
+test('when the run does not fit, the tap sends as many as the belt has room for and the rest stay', () => {
   const s = createState(mk({ trucks: ['MOO', 'W'], belt: 'MMMMM' }), [0, 3]);
+  assert.equal(canTap(s, 0), true);
+  assert.equal(tap(s, 0), true);
+  assert.deepEqual(s.trucks[0], ['M', 'O']);
+  assert.equal(load(s), 6);
+});
+test('tap is refused when the belt is already full', () => {
+  const s = createState(mk({ trucks: ['MOO', 'W'], belt: 'MMMMMM' }), [0, 3]);
   assert.equal(canTap(s, 0), false);
   assert.equal(tap(s, 0), false);
   assert.deepEqual(s.trucks[0], ['M', 'O', 'O']);
@@ -65,8 +72,11 @@ test('tap is refused once the game is won', () => {
 test('rapid taps never push the load above beltCapacity', () => {
   const s = createState(mk({ trucks: ['WMMOO', 'W'], truckCapacity: 5, beltCapacity: 3 }), [0, 1]);
   assert.equal(tap(s, 0), true);
-  assert.equal(tap(s, 0), false);
   assert.equal(load(s), 2);
+  assert.equal(tap(s, 0), true, 'one M of the two fits');
+  assert.equal(load(s), 3);
+  assert.deepEqual(s.trucks[0], ['W', 'M']);
+  assert.equal(tap(s, 0), false);
 });
 test('a belt unit drops into a truck whose top matches and has room', () => {
   const s = createState(mk({ trucks: ['WO', 'WM'], belt: 'O' }), [0, 3]);
@@ -106,8 +116,8 @@ test('isWon only when the belt is empty and every truck is full of one colour', 
   assert.equal(isWon(createState(mk({ truckCapacity: 2, trucks: ['MM', ''] }), [0, 2])), false);
   assert.equal(isWon(createState(mk({ truckCapacity: 2, trucks: ['MM', 'OO'], belt: 'W' }), [0, 2])), false);
 });
-test('isLost when settled, not won, and no run fits on the belt', () => {
-  const s = createState(mk({ trucks: ['MMOO', 'OOMM'], beltCapacity: 2, belt: 'W' }), [0, 1]);
+test('isLost when settled, not won, and the belt is full', () => {
+  const s = createState(mk({ trucks: ['MMOO', 'OOMM'], beltCapacity: 2, belt: 'WW' }), [0, 1]);
   assert.equal(isLost(s), false);
   run(s, 2);
   assert.equal(isLost(s), true);
@@ -196,4 +206,28 @@ test('validateLevel accepts belt points that carry a height, and rejects a heigh
   assert.doesNotThrow(() => validateLevel(mk({ trucks: ['MMMM'], beltPath: pts(0.75) })));
   assert.throws(() => validateLevel(mk({ trucks: ['MMMM'], beltPath: pts(-1) })), /point 2/i);
   assert.throws(() => validateLevel(mk({ trucks: ['MMMM'], beltPath: pts('up') })), /point 2/i);
+});
+
+test('beltLimit caps the load below the number of belt slots', () => {
+  const s = createState(mk({ trucks: ['WMMOO', 'WMM'], truckCapacity: 5, beltCapacity: 6, beltLimit: 3 }), [0, 3]);
+  assert.equal(s.ring.length, 6);
+  assert.equal(tap(s, 0), true);
+  assert.equal(load(s), 2);
+  assert.equal(tap(s, 0), true, 'only one of the two M fits under the limit of 3');
+  assert.equal(load(s), 3);
+  assert.deepEqual(s.trucks[0], ['W', 'M']);
+  assert.equal(canTap(s, 1), false, 'belt at its limit');
+});
+test('validateLevel rejects a beltLimit above beltCapacity, or a belt fuller than the limit', () => {
+  assert.throws(() => validateLevel(mk({ trucks: ['M'], beltLimit: 7 })), /beltLimit/);
+  assert.throws(() => validateLevel(mk({ trucks: ['M'], beltLimit: 0 })), /beltLimit/);
+  assert.throws(() => validateLevel(mk({ trucks: ['M'], belt: 'OOO', beltLimit: 2 })), /beltLimit/);
+  validateLevel(mk({ trucks: ['M'], belt: 'OO', beltLimit: 2 }));
+});
+test('a tapped run longer than the gap to the next truck still all drops into that truck', () => {
+  const s = createState(mk({ truckCapacity: 6, beltCapacity: 10, trucks: ['MOOOO', 'O', 'W'] }), [0, 2, 6]);
+  tap(s, 0);
+  run(s, 3);
+  assert.deepEqual(s.trucks[1], ['O', 'O', 'O', 'O', 'O']);
+  assert.equal(load(s), 0);
 });

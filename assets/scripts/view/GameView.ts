@@ -1,5 +1,6 @@
 import { _decorator, Component, Node, Vec3, Color, MeshRenderer } from 'cc';
 import type { GameState, GameEvent } from '../core/Rules';
+import { FULL_SPEED } from '../core/Rules';
 import type { Layout } from '../core/Layout';
 import type { GameAssets } from './GameAssets';
 import type { Stage } from './Stage';
@@ -36,7 +37,7 @@ export class GameView extends Component {
   @property({ group: 'Cubes', tooltip: 'Cubes closer than this collide and are pushed apart (about a cube\'s width)' })
   collideRadius = 0.24;
   @property({ group: 'Cubes', tooltip: 'Speed at which cubes crowded by a new block drift back to their place' })
-  crowdDrift = 0.35;
+  crowdDrift = 0.2;
   @property({ group: 'Cubes', tooltip: 'Cubes of each block (of 24) that trail behind the rest on the belt' })
   stragglers = 6;
 
@@ -44,8 +45,10 @@ export class GameView extends Component {
   topOutline = 0.005;
   @property({ group: 'Blocks', tooltip: 'Colour of the mark a block leaves behind in its truck' })
   impressionColor = new Color(143, 134, 172, 255);
-  @property({ group: 'Blocks', tooltip: 'Length of that mark as a share of the block that left' })
-  impressionSize = 0.92;
+  @property({ group: 'Blocks', tooltip: 'Space left between neighbouring marks' })
+  impressionGap = 0.05;
+  @property({ group: 'Blocks', tooltip: 'Corner radius of a mark (0 = sharp corners)' })
+  impressionCorner = 0.07;
 
   @property({ group: 'Finished truck', tooltip: 'Seconds the white outline takes to run from the headlights to the tail lights' })
   outlineRunTime = 0.45;
@@ -75,6 +78,7 @@ export class GameView extends Component {
   onLeave: (() => void) | null = null;
 
   tickDur = 0.45;
+  private slowestTick = 0.45 / FULL_SPEED;
 
   private stage!: Stage;
   private belt!: BeltView;
@@ -95,6 +99,7 @@ export class GameView extends Component {
 
   init(assets: GameAssets, layout: Layout, state: GameState, tickDur: number, leaveImpression = true) {
     this.tickDur = tickDur;
+    this.slowestTick = tickDur / FULL_SPEED;
     this.applyTuning();
     setEffects(assets.baseMaterial ? assets.baseMaterial.effectAsset : null, assets.toonEffect);
     const models = assets.models;
@@ -184,10 +189,14 @@ export class GameView extends Component {
   }
 
   onEvents(events: GameEvent[], progress: number) {
+    // The state already holds every drop of this batch, and one tap can drop several blocks into the same truck,
+    // so count them to give each drop its own place in the truck (bottom first) instead of all the top one.
+    const later = this.stage.state.trucks.map(() => 0);
+    for (const e of events) if (e.type === 'drop') later[e.truck]++;
     for (const e of events) {
       if (e.type === 'shift') this.onShift(e.from, e.to);
       else if (e.type === 'enter') this.onEnter(e.truck, e.slot, e.color);
-      else this.onDrop(e.truck, e.slot, e.color, progress);
+      else this.onDrop(e.truck, e.slot, e.color, progress, this.stage.state.trucks[e.truck].length - later[e.truck]--);
     }
   }
 
@@ -204,7 +213,11 @@ export class GameView extends Component {
       } else if (c.mode === 'toBelt' || c.mode === 'toTruck') {
         if (c.delay > 0) {
           c.delay -= dt;
-          if (c.ride) this.ride(c, visualOffset, dt);
+          if (c.ride) {
+            this.ride(c, visualOffset, dt);
+            // Fly in the moment the cube reaches its truck's mouth: the belt may have sped up since the drop was timed.
+            if (c.mode === 'toTruck' && this.motion.atGate(c, visualOffset, c.gateF)) c.delay = 0;
+          }
           continue;
         }
         if (!c.launched) this.launch(c);
@@ -230,7 +243,8 @@ export class GameView extends Component {
     tuning.stragglers = Math.max(0, Math.min(CUBES_PER_UNIT, Math.round(this.stragglers)));
     tuning.topOutline = this.topOutline;
     tuning.impressionColor = hexOf(this.impressionColor);
-    tuning.impressionSize = this.impressionSize;
+    tuning.impressionGap = this.impressionGap;
+    tuning.impressionCorner = this.impressionCorner;
     tuning.outlineRise = this.outlineRunTime;
     tuning.outlineThick = this.outlineThickness;
     tuning.lidTime = this.lidTime;
@@ -265,7 +279,7 @@ export class GameView extends Component {
   private onShift(from: number, to: number) {
     const pitch = this.stage.layout.path.length / this.stage.state.ring.length;
     for (const c of this.cubes) {
-      if (c.slot !== from || (c.mode !== 'belt' && c.mode !== 'toBelt')) continue;
+      if (c.slot !== from || c.group || (c.mode !== 'belt' && c.mode !== 'toBelt')) continue;
       c.slot = to;
       if (c.mode === 'belt') { c.dA -= pitch; c.creep = crowdSpeed(); }
     }
@@ -278,9 +292,9 @@ export class GameView extends Component {
     for (const c of unit) { c.slot = slot; c.gateF = gateF; }
   }
 
-  private onDrop(truck: number, slot: number, color: string, progress: number) {
-    const index = this.stage.state.trucks[truck].length - 1;
-    const claimed = this.cubes.filter(c => (c.mode === 'belt' || c.mode === 'toBelt') && c.slot === slot && c.color === color);
+  private onDrop(truck: number, slot: number, color: string, progress: number, index: number) {
+    // Skip cubes an earlier drop already claimed (still flying out of their truck): one tap can drop several blocks at the same slot.
+    const claimed = this.cubes.filter(c => !c.group && (c.mode === 'belt' || c.mode === 'toBelt') && c.slot === slot && c.color === color);
     if (claimed.length === 0) {
       this.trucks.redraw(truck);
       this.trucks.checkComplete(truck);
@@ -292,7 +306,7 @@ export class GameView extends Component {
     const visualOffset = this.stage.state.offset + progress, gateF = this.motion.gateFraction(truck);
     for (const c of claimed) {
       c.group = g;
-      if (c.mode === 'belt') this.startDrop(c, this.motion.timeToGate(c, visualOffset, gateF, this.tickDur));
+      if (c.mode === 'belt') this.startDrop(c, this.motion.timeToGate(c, visualOffset, gateF, this.slowestTick));
     }
   }
 
@@ -301,8 +315,10 @@ export class GameView extends Component {
     this.motion.tumble(c, dt);
   }
 
+  // delay is only a safety limit (worked out at the belt's slowest speed): step() launches the cube as soon as it
+  // reaches the mouth of its truck.
   private startDrop(c: Cube, delay: number) {
-    c.mode = 'toTruck'; c.truck = c.group!.truck; c.ride = true;
+    c.mode = 'toTruck'; c.truck = c.group!.truck; c.ride = true; c.gateF = this.motion.gateFraction(c.truck);
     c.t = 0; c.dur = tuning.flyIn; c.delay = delay; c.launched = false;
   }
 
@@ -341,7 +357,7 @@ export class GameView extends Component {
   private joinBelt(c: Cube, visualOffset: number) {
     c.mode = 'belt'; c.dA = c.landDA; c.dC = 0; c.ang = NaN; c.pdA = c.dA; c.pdC = 0;
     if (Math.abs(c.landDA) > LANDED_OFF_SPOT) c.creep = crowdSpeed();
-    if (c.group) this.startDrop(c, this.motion.timeToGate(c, visualOffset, this.motion.gateFraction(c.group.truck), this.tickDur));
+    if (c.group) this.startDrop(c, this.motion.timeToGate(c, visualOffset, this.motion.gateFraction(c.group.truck), this.slowestTick));
   }
 
   private land(c: Cube) {

@@ -1,8 +1,9 @@
 {
-  "caption": "Harder than you think",
+  "caption": "Only Sharp Minds Can Solve This!",
   "tapsToRedirect": -1,
   "truckCapacity": 8,
   "beltCapacity": 31,
+  "beltLimit": 22,
   "colors": {
     "R": "#DD0705",
     "Y": "#F5C52A",

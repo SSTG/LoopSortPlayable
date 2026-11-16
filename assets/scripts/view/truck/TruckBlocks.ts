@@ -44,7 +44,8 @@ export class TruckBlocks {
   }
 
   private addImpression(root: Node, truck: number, at: number) {
-    const mesh = this.shapes.ovalPlate(this.bedWidth(truck) + 0.05, (this.stage.layout.unit - BLOCK_GAP) * tuning.impressionSize);
+    const gap = Math.max(0, tuning.impressionGap);
+    const mesh = this.shapes.roundedPlate(this.bedWidth(truck), this.stage.layout.unit - gap, tuning.impressionCorner);
     this.add(root, 'Impression', mesh, this.impressionMat, false, this.stage.blockTop - this.stage.blockH + IMPRESSION_LIFT, this.placeZ(truck, at));
   }
 

@@ -20,7 +20,6 @@ export const BLOCK_TALL = 1;
 export const BLOCK_GAP = 0.001;
 export const BLOCK_ROUND = 0.045;
 export const OUTLINE_H = 0.07;
-export const IMPRESSION_OVAL = 3;
 export const UP = new Vec3(0, 1, 0);
 export const TOON_LIGHT = Math.pow(0.65, 2.2);
 
@@ -34,7 +33,7 @@ export const tuning = {
   breakTime: 0.8,
   flyOut: 0.3,
   flyIn: 0.38,
-  creep: 0.35,
+  creep: 0.2,
   pushRadius: 0.24,
   stragglers: 6,
   topOutline: 0.005,
@@ -45,7 +44,8 @@ export const tuning = {
   lidTime: 0.6,
   tickTime: 0.9,
   impressionColor: '#8F86AC',
-  impressionSize: 0.92,
+  impressionGap: 0.05,
+  impressionCorner: 0.07,
   arrow: { every: 2, pair: 1.1, width: 0.52, length: 0.48, round: 0.08, color: '#B7A3DC' },
 };
 

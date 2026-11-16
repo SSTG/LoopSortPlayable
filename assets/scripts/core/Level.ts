@@ -3,6 +3,7 @@ export interface BeltPathData { points: number[][]; radius: number; width: numbe
 export interface LevelData {
   truckCapacity: number;
   beltCapacity: number;
+  beltLimit?: number;
   colors: Record<string, string>;
   trucks: string[];
   belt: string;
@@ -12,6 +13,10 @@ export interface LevelData {
 
   caption?: string;
   tapsToRedirect?: number;
+}
+
+export function beltLimit(l: LevelData): number {
+  return l.beltLimit === undefined ? l.beltCapacity : l.beltLimit;
 }
 
 export const DEFAULT_CAPTION = 'Harder than you think';
