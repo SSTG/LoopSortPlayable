@@ -28,8 +28,8 @@ export class TruckView {
   private outlines: TruckOutline[] = [];
   private done: boolean[] = [];
   private incoming: number[] = [];
-  private impressions: number[][] = [];
-  private originals: number[] = [];
+  // Highest number of places in each truck that have held a block; every empty place below it shows an impression.
+  private peak: number[] = [];
   private blocks: TruckBlocks;
   private tmp = new Vec3();
 
@@ -68,8 +68,7 @@ export class TruckView {
   reset() {
     const state = this.stage.state;
     this.incoming = state.trucks.map(() => 0);
-    this.impressions = state.trucks.map(() => []);
-    this.originals = state.trucks.map(t => t.length);
+    this.peak = state.trucks.map(t => t.length);
     state.trucks.forEach((_, i) => {
       this.done[i] = isComplete(state, i);
       Tween.stopAllByTarget(this.lids[i]);
@@ -91,17 +90,16 @@ export class TruckView {
 
   clearIncoming(truck: number) { this.incoming[truck] = 0; }
 
-  blocksLeft(truck: number, count: number, stackLenBefore: number) {
-    const left = stackLenBefore - count;
-    for (let at = left; at < Math.min(stackLenBefore, this.originals[truck]); at++) this.impressions[truck].push(at);
-    this.originals[truck] = Math.min(this.originals[truck], left);
+  blocksLeft(truck: number, _count: number, stackLenBefore: number) {
+    this.peak[truck] = Math.max(this.peak[truck], stackLenBefore);
     this.redraw(truck);
   }
 
   redraw(i: number) {
     const shown = this.stage.state.trucks[i].length - this.incoming[i];
-    this.impressions[i] = this.impressions[i].filter(at => at >= shown);
-    const marks = this.leaveImpression ? this.impressions[i] : [];
+    this.peak[i] = Math.max(this.peak[i], shown);
+    const marks: number[] = [];
+    if (this.leaveImpression) for (let at = shown; at < this.peak[i]; at++) marks.push(at);
     this.blocks.draw(this.blockRoots[i], i, shown, marks, !this.isForming(i) && !this.done[i]);
   }
 
