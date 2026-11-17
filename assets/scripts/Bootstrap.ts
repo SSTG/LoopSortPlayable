@@ -1,10 +1,10 @@
-import { _decorator, Component, Camera, Vec3, geometry, sys } from 'cc';
+import { _decorator, Component, Camera, Vec3, geometry, sys, JsonAsset, Prefab, Material, EffectAsset } from 'cc';
 import { DEBUG } from 'cc/env';
 import type { GameState, GameEvent, LevelData } from './core/Rules';
 import { createState, tap, tick, load, canTap, tapCount, isWon, isLost, isComplete, levelCaption, redirectDue, beltLimit } from './core/Rules';
 import { buildLayout } from './core/Layout';
 import type { Layout } from './core/Layout';
-import { loadGameAssets } from './view/GameAssets';
+import { findLevel, collectGameAssets } from './view/GameAssets';
 import { GameView } from './view/GameView';
 import { Hud } from './view/Hud';
 import { SoundManager } from './view/SoundManager';
@@ -23,16 +23,16 @@ const SOUND_DELAY = 0.3;
 
 @ccclass('Bootstrap')
 export class Bootstrap extends Component {
-  @property({ tooltip: 'Level file (without .json): a name in assets/resources/levels ("level1"), or with its folder under assets/resources ("FinalLevels/dog")' })
+  @property
   levelName = 'level1';
 
-  @property({ tooltip: 'Store page opened by the Download buttons when the game runs outside an ad network. Packaged ads (tools/pack-playable.mjs) use the network\'s own call instead.' })
+  @property
   storeUrl = '';
 
-  @property({ tooltip: 'When a block leaves a truck, leave a grey impression of it in its place until that place is filled again.' })
+  @property
   leaveImpression = true;
 
-  @property({ type: Camera, tooltip: 'The camera that looks at the level. Its field of view and how far it leans back (rotation X: -90 is straight down) are set on its node; its position is worked out so that the level fits the screen.' })
+  @property({ type: Camera })
   camera: Camera | null = null;
 
   @property({ type: GameView, tooltip: 'Draws the level (the GameView component on the GameView node)' })
@@ -41,23 +41,56 @@ export class Bootstrap extends Component {
   @property({ type: Hud, tooltip: 'The UI (the Hud component on the Canvas node)' })
   hud: Hud | null = null;
 
-  @property({ type: SoundManager, tooltip: 'The sounds (the SoundManager component on the Audio node)' })
+  @property({ type: SoundManager })
   soundManager: SoundManager | null = null;
 
-  @property({ tooltip: 'Seconds the belt takes to move on by one block at full speed (a crowded belt is slower)' })
+  @property
   beltTick = 0.45;
 
-  @property({ tooltip: 'Seconds of calm (no tap, no blocks dropping or flying) before the pointing hand shows, also at the start' })
+  @property
   hintIdle = 3;
 
-  @property({ tooltip: 'Share of the screen height kept clear of the level at the top, for the caption' })
+  @property
   topReserve = 0.12;
 
-  @property({ tooltip: 'Share of the screen height kept clear of the level at the bottom, for the buttons' })
+  @property
   bottomReserve = 0.15;
 
-  @property({ tooltip: 'The same at the bottom on wide screens (tablets, desktop), where the level fits between the buttons and the logo instead of standing above them' })
+  @property
   wideBottomReserve = 0.03;
+
+  @property({ type: [JsonAsset], group: 'Assets' })
+  levels: JsonAsset[] = [];
+
+  @property({ type: Material, group: 'Assets' })
+  baseMaterial: Material | null = null;
+
+  @property({ type: EffectAsset, group: 'Assets' })
+  toonEffect: EffectAsset | null = null;
+
+  @property({ type: Prefab, group: 'Models' })
+  Bus: Prefab | null = null;
+
+  @property({ type: Prefab, group: 'Models' })
+  ConveyorUp: Prefab | null = null;
+
+  @property({ type: Prefab, group: 'Models' })
+  CubeBeveled: Prefab | null = null;
+
+  @property({ type: Prefab, group: 'Models' })
+  CubeMiddle: Prefab | null = null;
+
+  @property({ type: Prefab, group: 'Models' })
+  CubeCorner: Prefab | null = null;
+
+  @property({ type: Prefab, group: 'Models' })
+  CubeFlat: Prefab | null = null;
+
+  @property({ type: Prefab, group: 'Models' })
+  Block: Prefab | null = null;
+
+  @property({ type: Prefab, group: 'Models' })
+  BlockCorner: Prefab | null = null;
 
   private ready = false;
   private level!: LevelData;
@@ -95,7 +128,11 @@ export class Bootstrap extends Component {
   }
 
   private async boot() {
-    const assets = await loadGameAssets(levelFor(adHooks(), this.levelName));
+    const level = findLevel(this.levels, levelFor(adHooks(), this.levelName));
+    const assets = collectGameAssets(level, {
+      Bus: this.Bus, ConveyorUp: this.ConveyorUp, CubeBeveled: this.CubeBeveled, CubeMiddle: this.CubeMiddle,
+      CubeCorner: this.CubeCorner, CubeFlat: this.CubeFlat, Block: this.Block, BlockCorner: this.BlockCorner,
+    }, this.baseMaterial, this.toonEffect);
     if (!this.camera || !this.hud || !this.soundManager || !this.gameView) {
       throw new Error('The Game node needs its Camera, Game View, Hud and Sound Manager set in the Inspector');
     }

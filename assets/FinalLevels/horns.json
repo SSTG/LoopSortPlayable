@@ -1,0 +1,42 @@
+{
+  "caption": "Prove You're a Puzzle Master!",
+  "tapsToRedirect": -1,
+  "truckCapacity": 8,
+  "beltCapacity": 23,
+  "beltLimit": 18,
+  "colors": {
+    "M": "#F224F2",
+    "O": "#F2682A",
+    "W": "#FFF1F8",
+    "B": "#3A7BF2"
+  },
+  "trucks": [
+    "BWOWBOOO",
+    "WMBBBWBO",
+    "BOWMWMM",
+    "OMMWMMO"
+  ],
+  "belt": "WB",
+  "truckPlaces": [
+    [0, 5.35, -90],
+    [-3.25, 1.45, 50],
+    [3.25, 1.45, 130],
+    [0, 0.08, 90]
+  ],
+  "beltPath": {
+    "points": [
+      [-3.5, 7.6],
+      [-2.1, 7.6],
+      [-1.5, 4.4],
+      [1.5, 4.4],
+      [2.1, 7.6],
+      [3.5, 7.6],
+      [3, 3.2],
+      [2, 1],
+      [-2, 1],
+      [-3, 3.2]
+    ],
+    "radius": 0.6,
+    "width": 0.65
+  }
+}

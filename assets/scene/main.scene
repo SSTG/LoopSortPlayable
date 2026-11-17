@@ -237,6 +237,92 @@
     "topReserve": 0.12,
     "bottomReserve": 0.15,
     "wideBottomReserve": 0.03,
+    "levels": [
+      {
+        "__uuid__": "a3fab460-e45a-4be9-bdec-67d8f4768cfe",
+        "__expectedType__": "cc.JsonAsset"
+      },
+      {
+        "__uuid__": "587e8b29-6500-48c5-a184-f1333c2322b4",
+        "__expectedType__": "cc.JsonAsset"
+      },
+      {
+        "__uuid__": "7f29a51b-f022-444d-960c-b2892dd4b8a5",
+        "__expectedType__": "cc.JsonAsset"
+      },
+      {
+        "__uuid__": "617b97d1-e8e8-4cfe-9432-fae6d5463eba",
+        "__expectedType__": "cc.JsonAsset"
+      },
+      {
+        "__uuid__": "b4900b86-bd09-45dc-9990-d68f55fa7ba0",
+        "__expectedType__": "cc.JsonAsset"
+      },
+      {
+        "__uuid__": "0f350860-421f-41b4-80b3-79059f39b184",
+        "__expectedType__": "cc.JsonAsset"
+      },
+      {
+        "__uuid__": "a0dd74fe-dd7a-4508-b620-360bad3b1d8b",
+        "__expectedType__": "cc.JsonAsset"
+      },
+      {
+        "__uuid__": "7ff1d335-5880-44fc-a1f1-83d0f65166f1",
+        "__expectedType__": "cc.JsonAsset"
+      },
+      {
+        "__uuid__": "c239fcdf-6f0c-46d1-a947-c4c9b256f049",
+        "__expectedType__": "cc.JsonAsset"
+      },
+      {
+        "__uuid__": "bea258d8-ad79-4cb5-be4e-dcd16bc4ff72",
+        "__expectedType__": "cc.JsonAsset"
+      },
+      {
+        "__uuid__": "26b798cb-ffc8-4ae0-8432-0d7cbaa9ab97",
+        "__expectedType__": "cc.JsonAsset"
+      }
+    ],
+    "baseMaterial": {
+      "__uuid__": "36e8dc9d-4cc9-4260-b9a0-ab5f442accac",
+      "__expectedType__": "cc.Material"
+    },
+    "toonEffect": {
+      "__uuid__": "8fe63a5b-145a-436a-b148-8d2dfdd2da09",
+      "__expectedType__": "cc.EffectAsset"
+    },
+    "Bus": {
+      "__uuid__": "aeedee68-7d0e-4a6b-a04e-40584a903369@49927",
+      "__expectedType__": "cc.Prefab"
+    },
+    "ConveyorUp": {
+      "__uuid__": "3b567b28-d21e-4330-a3b2-82151775fd7c@8bb62",
+      "__expectedType__": "cc.Prefab"
+    },
+    "CubeBeveled": {
+      "__uuid__": "f76f6dc5-b9e3-4dd8-b5ba-b9bf09facb48@5602e",
+      "__expectedType__": "cc.Prefab"
+    },
+    "CubeMiddle": {
+      "__uuid__": "420df673-5cac-483d-bf5c-3e501eb2f348@ad9fa",
+      "__expectedType__": "cc.Prefab"
+    },
+    "CubeCorner": {
+      "__uuid__": "d4a60319-384e-4100-93e2-e2ac0e49cacb@a796c",
+      "__expectedType__": "cc.Prefab"
+    },
+    "CubeFlat": {
+      "__uuid__": "6ac15949-87fc-422d-8cb7-1271266e7315@acf8c",
+      "__expectedType__": "cc.Prefab"
+    },
+    "Block": {
+      "__uuid__": "2ec337f5-630c-42b5-b748-9bb7c2582354@6abcd",
+      "__expectedType__": "cc.Prefab"
+    },
+    "BlockCorner": {
+      "__uuid__": "63a534ef-c07e-45fb-92b8-970c3d4101ad@1896f",
+      "__expectedType__": "cc.Prefab"
+    },
     "_id": "LoopSortBootstrap000001"
   },
   {
@@ -5103,7 +5189,42 @@
     "fx": {
       "__id__": 136
     },
-    "folder": "audio",
+    "musicClip": {
+      "__uuid__": "5c3ed58f-7c6f-4788-8fb0-7b48bbe4e1ca",
+      "__expectedType__": "cc.AudioClip"
+    },
+    "pop": {
+      "__uuid__": "7e01ad59-1eda-403b-a432-a88ac7d0621e",
+      "__expectedType__": "cc.AudioClip"
+    },
+    "cube": {
+      "__uuid__": "3c33b524-4dee-4359-90cd-9e32625516c6",
+      "__expectedType__": "cc.AudioClip"
+    },
+    "click": {
+      "__uuid__": "151ea91d-7838-4302-b58e-66809f01ca3f",
+      "__expectedType__": "cc.AudioClip"
+    },
+    "win": {
+      "__uuid__": "ffb16cd3-e176-47e4-bcc8-b7fd57dee2ce",
+      "__expectedType__": "cc.AudioClip"
+    },
+    "fail": {
+      "__uuid__": "862f82e3-b990-4e0d-a0fd-dff7fc5c382e",
+      "__expectedType__": "cc.AudioClip"
+    },
+    "ui": {
+      "__uuid__": "e09b7d51-6337-4c58-ae82-e463c8ab5dff",
+      "__expectedType__": "cc.AudioClip"
+    },
+    "complete": {
+      "__uuid__": "5d82ca1e-d466-4e19-a14b-cdbcaa340ea5",
+      "__expectedType__": "cc.AudioClip"
+    },
+    "confetti": {
+      "__uuid__": "c1caf374-f559-4869-b88b-5f6ba319560c",
+      "__expectedType__": "cc.AudioClip"
+    },
     "_id": "8dWKnHfDNxSIvPZZ63fFKc"
   },
   {

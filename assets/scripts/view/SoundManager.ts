@@ -1,20 +1,43 @@
-import { _decorator, Component, AudioSource, AudioClip, resources } from 'cc';
+import { _decorator, Component, AudioSource, AudioClip } from 'cc';
 
 const { ccclass, property } = _decorator;
 
-const SOUNDS = ['pop', 'cube', 'click', 'win', 'fail', 'ui', 'complete', 'confetti'];
-const MUSIC = 'music';
+const SOUNDS = ['pop', 'cube', 'click', 'win', 'fail', 'ui', 'complete', 'confetti'] as const;
 
 @ccclass('SoundManager')
 export class SoundManager extends Component {
-  @property({ type: AudioSource, tooltip: 'Plays the music: its loop and volume are set on this AudioSource. The clip is music.mp3 in the sound folder, loaded once the level is on screen.' })
+  @property({ type: AudioSource })
   music: AudioSource | null = null;
 
-  @property({ type: AudioSource, tooltip: 'Plays every other sound' })
+  @property({ type: AudioSource })
   fx: AudioSource | null = null;
 
-  @property({ tooltip: 'Folder under assets/resources holding the sounds: music, pop, cube, click, win, fail, ui, complete, confetti (.mp3). They load after the level appears so that they do not hold up the start.' })
-  folder = 'audio';
+  @property({ type: AudioClip, group: 'Clips' })
+  musicClip: AudioClip | null = null;
+
+  @property({ type: AudioClip, group: 'Clips' })
+  pop: AudioClip | null = null;
+
+  @property({ type: AudioClip, group: 'Clips' })
+  cube: AudioClip | null = null;
+
+  @property({ type: AudioClip, group: 'Clips' })
+  click: AudioClip | null = null;
+
+  @property({ type: AudioClip, group: 'Clips' })
+  win: AudioClip | null = null;
+
+  @property({ type: AudioClip, group: 'Clips' })
+  fail: AudioClip | null = null;
+
+  @property({ type: AudioClip, group: 'Clips' })
+  ui: AudioClip | null = null;
+
+  @property({ type: AudioClip, group: 'Clips' })
+  complete: AudioClip | null = null;
+
+  @property({ type: AudioClip, group: 'Clips' })
+  confetti: AudioClip | null = null;
 
   muted = false;
   private clips: Record<string, AudioClip> = {};
@@ -26,12 +49,14 @@ export class SoundManager extends Component {
   load() {
     if (this.loading) return;
     this.loading = true;
-    for (const name of SOUNDS) this.fetch(name, clip => { this.clips[name] = clip; });
-    this.fetch(MUSIC, clip => {
-      if (!this.music) return;
-      this.music.clip = clip;
+    for (const name of SOUNDS) {
+      const clip = this[name];
+      if (clip) this.clips[name] = clip; else console.warn(`[LoopSort] sound ${name} is not set on the SoundManager`);
+    }
+    if (this.music && this.musicClip) {
+      this.music.clip = this.musicClip;
       if (this.started && !this.stopped && !this.muted) this.music.play();
-    });
+    }
   }
 
   unlock() {
@@ -61,12 +86,5 @@ export class SoundManager extends Component {
   stopMusic() {
     this.stopped = true;
     if (this.music && this.music.clip) this.music.stop();
-  }
-
-  private fetch(name: string, done: (clip: AudioClip) => void) {
-    resources.load(`${this.folder}/${name}`, AudioClip, (err, clip) => {
-      if (err) console.warn(`[LoopSort] could not load sound ${name}: ${err.message}`);
-      else done(clip);
-    });
   }
 }

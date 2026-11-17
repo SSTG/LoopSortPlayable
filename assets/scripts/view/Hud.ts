@@ -20,7 +20,7 @@ const COUNTER_BOUNCE_TIME = 0.15;
 
 @ccclass('Hud')
 export class Hud extends Component {
-  @property({ type: Node, tooltip: 'Full-screen node that receives taps on the game (trucks)' })
+  @property({ type: Node })
   touchCatcher: Node | null = null;
 
   @property({ type: Node, tooltip: 'The pointing hand of the tutorial. Its anchor point is the fingertip.' })
@@ -29,46 +29,46 @@ export class Hud extends Component {
   @property({ type: Node, tooltip: 'Empty node the ticks and confetti of finished trucks are put under' })
   checks: Node | null = null;
 
-  @property({ type: Node, tooltip: 'The belt counter (icon + number); it bounces when the number changes' })
+  @property({ type: Node })
   counter: Node | null = null;
 
-  @property({ type: Label, tooltip: 'The counter\'s number, shown as load/capacity' })
+  @property({ type: Label })
   counterLabel: Label | null = null;
 
-  @property({ type: Label, tooltip: 'Text at the top. The level file\'s "caption" replaces its text.' })
+  @property({ type: Label })
   caption: Label | null = null;
 
-  @property({ type: Node, tooltip: 'Download button (opens the store)' })
+  @property({ type: Node })
   download: Node | null = null;
 
-  @property({ type: Node, tooltip: 'Mute button; needs a Graphics component, the speaker icon is drawn into it' })
+  @property({ type: Node })
   mute: Node | null = null;
 
   @property({ type: Node, tooltip: 'Logo; tapping it also opens the store' })
   logo: Node | null = null;
 
-  @property({ type: Label, tooltip: 'Red warning shown in preview when a level is broken' })
+  @property({ type: Label })
   banner: Label | null = null;
 
-  @property({ type: Node, tooltip: 'Card shown when the level is won. Children named "Play" open the store.' })
+  @property({ type: Node })
   winCard: Node | null = null;
 
-  @property({ type: Node, tooltip: 'Card shown when the belt is stuck. "Retry" restarts, "Play" opens the store.' })
+  @property({ type: Node })
   failCard: Node | null = null;
 
-  @property({ tooltip: 'The short side of the screen is always this many UI units; the long side follows the screen' })
+  @property
   shortSide = 720;
 
-  @property({ tooltip: 'Colour of the counter\'s number when the belt is full' })
+  @property
   fullColor = new Color(255, 90, 90, 255);
 
-  @property({ tooltip: 'Seconds between one child of a card popping in and the next' })
+  @property
   cardStagger = 0.06;
 
   @property({ tooltip: 'Size the pointing hand shrinks to as it pulses (1 = no pulse)' })
   hintPulse = 0.8;
 
-  @property({ tooltip: 'UI units that one unit of the level measures on a phone. Where the level is drawn smaller than this (tablets, wide screens) the hand, the ticks and the confetti shrink with it.' })
+  @property
   worldUnit = 70;
 
   private screenFit: ScreenFit | null = null;

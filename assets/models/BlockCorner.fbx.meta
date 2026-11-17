@@ -1,0 +1,78 @@
+{
+  "ver": "2.3.14",
+  "importer": "fbx",
+  "imported": true,
+  "uuid": "63a534ef-c07e-45fb-92b8-970c3d4101ad",
+  "files": [],
+  "subMetas": {
+    "ce9cf": {
+      "importer": "gltf-mesh",
+      "uuid": "63a534ef-c07e-45fb-92b8-970c3d4101ad@ce9cf",
+      "displayName": "",
+      "id": "ce9cf",
+      "name": "Cube.023.mesh",
+      "userData": {
+        "gltfIndex": 0,
+        "triangleCount": 66
+      },
+      "ver": "1.1.1",
+      "imported": true,
+      "files": [
+        ".bin",
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "1896f": {
+      "importer": "gltf-scene",
+      "uuid": "63a534ef-c07e-45fb-92b8-970c3d4101ad@1896f",
+      "displayName": "",
+      "id": "1896f",
+      "name": "BlockCorner.prefab",
+      "userData": {
+        "gltfIndex": 0
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    }
+  },
+  "userData": {
+    "imageMetas": [],
+    "fbx": {
+      "smartMaterialEnabled": true
+    },
+    "lods": {
+      "enable": false,
+      "hasBuiltinLOD": false,
+      "options": [
+        {
+          "screenRatio": 0.25,
+          "faceCount": 1
+        },
+        {
+          "screenRatio": 0.125,
+          "faceCount": 0.25
+        },
+        {
+          "screenRatio": 0.01,
+          "faceCount": 0.1
+        }
+      ]
+    },
+    "assetFinder": {
+      "meshes": [
+        "63a534ef-c07e-45fb-92b8-970c3d4101ad@ce9cf"
+      ],
+      "skeletons": [],
+      "textures": [],
+      "materials": [],
+      "scenes": [
+        "63a534ef-c07e-45fb-92b8-970c3d4101ad@1896f"
+      ]
+    }
+  }
+}

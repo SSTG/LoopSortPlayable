@@ -26,50 +26,50 @@ const LANDED_OFF_SPOT = 0.05;
 
 @ccclass('GameView')
 export class GameView extends Component {
-  @property({ group: 'Cubes', tooltip: 'Size of a loose cube on the belt' })
+  @property({ group: 'Cubes' })
   cubeSize = 0.25;
-  @property({ group: 'Cubes', tooltip: 'Seconds from a tap until every cube it released is on the belt' })
+  @property({ group: 'Cubes' })
   breakTime = 0.8;
-  @property({ group: 'Cubes', tooltip: 'Seconds a cube takes from its block to the belt' })
+  @property({ group: 'Cubes' })
   flyOutTime = 0.3;
-  @property({ group: 'Cubes', tooltip: 'Seconds a cube takes from the belt into a truck' })
+  @property({ group: 'Cubes' })
   flyInTime = 0.38;
-  @property({ group: 'Cubes', tooltip: 'Cubes closer than this collide and are pushed apart (about a cube\'s width)' })
+  @property({ group: 'Cubes' })
   collideRadius = 0.24;
-  @property({ group: 'Cubes', tooltip: 'Speed at which cubes crowded by a new block drift back to their place' })
+  @property({ group: 'Cubes' })
   crowdDrift = 0.2;
-  @property({ group: 'Cubes', tooltip: 'Cubes of each block (of 24) that trail behind the rest on the belt' })
+  @property({ group: 'Cubes' })
   stragglers = 6;
 
-  @property({ group: 'Blocks', tooltip: 'Width of the black line round the top block of a truck' })
+  @property({ group: 'Blocks' })
   topOutline = 0.005;
-  @property({ group: 'Blocks', tooltip: 'Colour of the mark a block leaves behind in its truck' })
+  @property({ group: 'Blocks' })
   impressionColor = new Color(143, 134, 172, 255);
-  @property({ group: 'Blocks', tooltip: 'Space left between neighbouring marks' })
+  @property({ group: 'Blocks' })
   impressionGap = 0.05;
-  @property({ group: 'Blocks', tooltip: 'Corner radius of a mark (0 = sharp corners)' })
+  @property({ group: 'Blocks' })
   impressionCorner = 0.07;
 
   @property({ group: 'Finished truck', tooltip: 'Seconds the white outline takes to run from the headlights to the tail lights' })
   outlineRunTime = 0.45;
   @property({ group: 'Finished truck', tooltip: 'Thickness of that white outline' })
   outlineThickness = 0.045;
-  @property({ group: 'Finished truck', tooltip: 'Seconds the lid then takes to slide shut' })
+  @property({ group: 'Finished truck' })
   lidTime = 0.6;
-  @property({ group: 'Finished truck', tooltip: 'How far the lid reaches past the blocks at the cab end' })
+  @property({ group: 'Finished truck' })
   lidExtra = 0.21;
-  @property({ group: 'Finished truck', tooltip: 'Seconds the tick then takes to form' })
+  @property({ group: 'Finished truck' })
   tickTime = 0.9;
   @property({ group: 'Finished truck', tooltip: 'Seconds the white outline then takes to fade away' })
   outlineFadeTime = 0.4;
 
-  @property({ group: 'Belt arrows', tooltip: 'Width of an arrow (the belt model is 1.2 wide)' })
+  @property({ group: 'Belt arrows' })
   arrowWidth = 0.52;
-  @property({ group: 'Belt arrows', tooltip: 'Length of an arrow' })
+  @property({ group: 'Belt arrows' })
   arrowLength = 0.48;
-  @property({ group: 'Belt arrows', tooltip: 'Belt length between one pair of arrows and the next' })
+  @property({ group: 'Belt arrows' })
   arrowSpacing = 2;
-  @property({ group: 'Belt arrows', tooltip: 'Colour of the arrows' })
+  @property({ group: 'Belt arrows' })
   arrowColor = new Color(183, 163, 220, 255);
 
   onLanded: (() => void) | null = null;
