@@ -36,9 +36,10 @@ export class BlockShapes {
     return roundedBox(w, h, l, r);
   }
 
-  blockMesh(truck: number): Mesh {
+  // A truck block spanning `units` places in a row (a merged run of one colour).
+  blockMesh(truck: number, units = 1): Mesh {
     const s = cellScale(this.stage, truck, this.tmp);
-    const w = s.x * PIECE_COLS, h = s.y * PIECE_LAYERS, l = s.z * PIECE_SLICES;
+    const w = s.x * PIECE_COLS, h = s.y * PIECE_LAYERS, l = s.z * PIECE_SLICES + (units - 1) * this.stage.layout.unit;
     const raw = this.rawGeo.Block;
     if (!raw) return this.box(w, h, l, BLOCK_ROUND);
     return sliceBox(raw, 'rawBlock', BLOCK_NATIVE.half, BLOCK_NATIVE.bevel, w, h, l, 0.25 * s.z);

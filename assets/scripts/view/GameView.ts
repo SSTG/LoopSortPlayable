@@ -4,24 +4,25 @@ import { FULL_SPEED } from '../core/Rules';
 import type { Layout } from '../core/Layout';
 import type { GameAssets } from './GameAssets';
 import type { Stage } from './Stage';
-import type { Cube, Landing } from './cube/CubeTypes';
+import type { Cube, Landing, Pieces } from './cube/CubeTypes';
 import { createCube } from './cube/CubeFactory';
 import { advanceFlight, rememberStart } from './cube/CubeFlight';
+import { advancePour, pourSpeed } from './cube/CubePour';
 import { BeltView } from './belt/BeltView';
 import { BeltMotion } from './belt/BeltMotion';
 import { BlockShapes } from './block/BlockShapes';
 import { BlockPieces, emptyPieces } from './block/BlockPieces';
-import { cellPos, cellScale, leftFirst, mouthPos } from './block/BlockGrid';
+import { cellPos, cellLocal, cellScale, leftFirst, mouthPos } from './block/BlockGrid';
 import { TruckView } from './truck/TruckView';
-import { bake, toMesh, firstPart } from './mesh/ModelBake';
-import { roundedBox } from './mesh/RoundedBox';
+import { bake } from './mesh/ModelBake';
+import { plumpCube } from './mesh/PlumpCube';
 import { setEffects, makeToon, hexOf } from './Materials';
-import { CUBES_PER_UNIT, PIECE_COLS, PIECE_ROWS, FILE_GAP, HIT_FROM, BLOCK_TALL, BUS, tuning, crowdSpeed } from './ViewConfig';
+import { CUBES_PER_UNIT, PIECE_COLS, PIECE_ROWS, PIECE_COUNT, PIECE_LAYERS, PIECE_SLICES, HIT_FROM, BLOCK_TALL, BUS, tuning, crowdSpeed } from './ViewConfig';
 
 const { ccclass, property } = _decorator;
 
 const UNUSED_BUS_PARTS = ['polySurface3', 'TopCover'];
-const MAX_ROW_GAP = 0.2;
+const POUR_SPACING = 1.1; // gap between cubes in the pouring chain, in cube sizes
 const LANDED_OFF_SPOT = 0.05;
 
 @ccclass('GameView')
@@ -40,9 +41,31 @@ export class GameView extends Component {
   crowdDrift = 0.2;
   @property({ group: 'Cubes' })
   stragglers = 6;
+  @property({ group: 'Cubes', tooltip: 'How much a tapped block puffs up and wobbles as it turns into cubes' })
+  popStrength = 0.5;
+  @property({ group: 'Cubes', tooltip: 'Seconds the chain of cubes takes to run from the back of the truck to its mouth' })
+  pourTime = 0.3;
+  @property({ group: 'Cubes', tooltip: 'How far the chain swings side to side, as a share of the truck width' })
+  pourSway = 0.3;
+  @property({ group: 'Cubes', tooltip: 'Length of one side-to-side swing, in truck widths' })
+  pourWave = 5;
+  @property({ group: 'Cubes', tooltip: 'How fast the snaking shape shifts while the chain runs' })
+  pourDrift = 9;
+  @property({ group: 'Cubes', tooltip: 'Edge softness: 2.5 is very round and bulging, 5 is nearly a box' })
+  cubeRoundness = 3.2;
+  @property({ group: 'Cubes', tooltip: 'How far each cube\'s proportions may differ from a perfect cube (0.08 = up to 8%)' })
+  cubeVariety = 0.08;
+  @property({ group: 'Cubes', tooltip: 'Strength of the shiny highlight on the cubes' })
+  cubeShine = 6;
+  @property({ group: 'Cubes', tooltip: 'Size of that highlight: higher is broader and softer' })
+  cubeHighlightSize = 0.62;
+  @property({ group: 'Cubes', tooltip: 'Polished sheen around the cube edges' })
+  cubeSheen = 0.35;
+  @property({ group: 'Cubes', tooltip: 'Waxy softness of the shading, 0 to 1' })
+  cubeWax = 0.45;
 
-  @property({ group: 'Blocks' })
-  topOutline = 0.005;
+  @property({ group: 'Blocks', tooltip: 'How dark the inside of a block gets where cubes are missing (0 = no shadow, 1 = black)' })
+  innerShadow = 0.4;
   @property({ group: 'Blocks' })
   impressionColor = new Color(143, 134, 172, 255);
   @property({ group: 'Blocks' })
@@ -91,6 +114,7 @@ export class GameView extends Component {
   private beltList: Cube[] = [];
   private arriveList: Cube[] = [];
   private tmp = new Vec3();
+  private clock = 0;
   private tmp2 = new Vec3();
 
   get root(): Node { return this.node; }
@@ -103,16 +127,15 @@ export class GameView extends Component {
     this.applyTuning();
     setEffects(assets.baseMaterial ? assets.baseMaterial.effectAsset : null, assets.toonEffect);
     const models = assets.models;
-    const cube = models.CubeBeveled ? bake(models.CubeBeveled) : null;
     this.stage = {
       root: this.node, layout, state, beltY: 0, blockTop: 0.7, blockWidth: 0.79, blockH: 0.7, truckTurn: [],
-      cubeMesh: cube ? toMesh(firstPart(cube)) : roundedBox(1, 1, 1, 0.3, 2),
+      cubeShapes: [-0.35, 0, 0.35].map(d => plumpCube(Math.max(2.2, this.cubeRoundness + d))),
       colorMats: {}, blockMats: {},
     };
     const busParts = models.Bus ? bake(models.Bus, UNUSED_BUS_PARTS) : null;
     if (busParts) this.sizeBlocksToBus();
     for (const key of Object.keys(state.level.colors)) {
-      this.stage.colorMats[key] = makeToon(state.level.colors[key], true, false);
+      this.stage.colorMats[key] = makeToon(state.level.colors[key], true, false, tuning.cubeGloss);
       this.stage.blockMats[key] = makeToon(state.level.colors[key], false, true);
     }
     const shapes = new BlockShapes(this.stage, models);
@@ -121,7 +144,6 @@ export class GameView extends Component {
     this.belt = new BeltView(this.stage);
     this.belt.build(models.ConveyorUp);
     this.trucks = new TruckView(this.stage, shapes, busParts, leaveImpression);
-    this.trucks.isForming = truck => this.landings.some(g => g.truck === truck && !g.dead && g.left < g.need);
     this.trucks.onComplete = truck => { if (this.onComplete) this.onComplete(truck); };
     state.trucks.forEach((_, i) => this.trucks.build(i));
     this.reset(state);
@@ -149,28 +171,33 @@ export class GameView extends Component {
 
   eject(truck: number, colors: string[], stackLenBefore: number) {
     this.trucks.blocksLeft(truck, colors.length, stackLenBefore);
-    const stacks = colors.length * PIECE_ROWS;
-    const lastStart = Math.max(0, tuning.breakTime - tuning.flyOut - (PIECE_COLS - 1) * FILE_GAP);
-    const every = stacks > 1 ? Math.min(MAX_ROW_GAP, lastStart / (stacks - 1)) : 0;
+    // Cubes leave one after another, a cube's length apart, so they pour out as a single chain (capped at breakTime).
+    const count = colors.length * PIECE_COUNT;
+    const every = count > 1 ? Math.min(tuning.cubeSize * POUR_SPACING / pourSpeed(this.stage, truck), tuning.breakTime / (count - 1)) : 0;
     const fromLeft = leftFirst(this.stage, truck);
+    // One tap sends a run of one colour, drawn in the truck as a single block: link its units so it breaks apart as one.
+    const all: Pieces[] = [];
     colors.forEach((color, k) => {
       const index = stackLenBefore - 1 - k;
       const p = emptyPieces(truck, index, color);
+      const above = all[k - 1];
+      if (above && above.color === color) { p.after = above; above.before = p; }
+      all.push(p);
       const unit: Cube[] = [];
       for (let row = 0; row < PIECE_ROWS; row++) for (let col = 0; col < PIECE_COLS; col++) {
         const c = this.addCube(color, row * PIECE_COLS + col);
         c.mode = 'toBelt'; c.slot = -1; c.truck = truck; c.home = index;
         c.t = 0; c.dur = tuning.flyOut; c.launched = false; c.ride = false;
-        c.delay = (k * PIECE_ROWS + row) * every + (fromLeft ? PIECE_COLS - 1 - col : col) * FILE_GAP;
+        c.delay = (k * PIECE_COUNT + row * PIECE_COLS + (fromLeft ? PIECE_COLS - 1 - col : col)) * every;
         c.wob = c.delay * 45;
         c.q1.set(c.node.rotation);
         mouthPos(this.stage, truck, c.ctrl);
         this.pieces.seat(c, p, PIECE_ROWS - 1 - row, col);
         unit.push(c);
       }
-      this.pieces.fit(p);
       this.waiting[truck].push(unit);
     });
+    for (const p of all) this.pieces.fit(p);
   }
 
   flushIncoming(truck: number) {
@@ -201,6 +228,7 @@ export class GameView extends Component {
   }
 
   step(dt: number, tickProgress: number) {
+    this.clock += dt;
     const visualOffset = this.stage.state.offset + tickProgress;
     this.belt.step(visualOffset);
     let removed = false;
@@ -221,6 +249,11 @@ export class GameView extends Component {
           continue;
         }
         if (!c.launched) this.launch(c);
+        if (c.pouring) {
+          if (!advancePour(this.stage, c, dt, this.clock, this.tmp2)) continue;
+          c.pouring = false;
+          rememberStart(c);
+        }
         const target = c.mode === 'toBelt' ? this.motion.entry(c, visualOffset, this.tmp) : c.to;
         const at = advanceFlight(c, target, dt, this.tmp2);
         if (c.mode === 'toBelt' && c.t >= HIT_FROM) { c.lx = at.x; c.ly = -at.z; arriving.push(c); }
@@ -241,8 +274,15 @@ export class GameView extends Component {
     tuning.pushRadius = this.collideRadius;
     tuning.creep = this.crowdDrift;
     tuning.stragglers = Math.max(0, Math.min(CUBES_PER_UNIT, Math.round(this.stragglers)));
-    tuning.topOutline = this.topOutline;
+    tuning.popStrength = Math.max(0, this.popStrength);
+    tuning.pourTime = Math.max(0.05, this.pourTime);
+    tuning.pourSway = Math.max(0, this.pourSway);
+    tuning.pourWave = Math.max(0.5, this.pourWave);
+    tuning.pourDrift = this.pourDrift;
+    tuning.cubeVariety = Math.max(0, this.cubeVariety);
+    tuning.cubeGloss = { highlight: this.cubeShine, size: Math.max(0.05, this.cubeHighlightSize), rim: this.cubeSheen, wax: Math.max(0, Math.min(1, this.cubeWax)) };
     tuning.impressionColor = hexOf(this.impressionColor);
+    tuning.innerShadow = Math.max(0, Math.min(1, this.innerShadow));
     tuning.impressionGap = this.impressionGap;
     tuning.impressionCorner = this.impressionCorner;
     tuning.outlineRise = this.outlineRunTime;
@@ -330,8 +370,13 @@ export class GameView extends Component {
     c.group = g;
     c.cell = g.cubes.length;
     g.cubes.push(c);
-    c.stack = Math.floor(c.cell / PIECE_COLS) % PIECE_ROWS;
-    c.col = leftFirst(this.stage, g.truck) ? c.cell % PIECE_COLS : PIECE_COLS - 1 - c.cell % PIECE_COLS;
+    // Fill the block one row at a time, each row from the right of the screen to the left: the bottom layer's back
+    // row, then its front row, then the same for the layer above, so the block builds up evenly to the last cube.
+    const cell = c.cell % PIECE_COUNT, row = Math.floor(cell / PIECE_COLS), step = cell % PIECE_COLS;
+    const layer = Math.floor(row / PIECE_SLICES), slice = row % PIECE_SLICES;
+    c.stack = slice * PIECE_LAYERS + layer;
+    // leftFirst trucks have column 0 on the left of the screen, the others on the right.
+    c.col = leftFirst(this.stage, g.truck) ? PIECE_COLS - 1 - step : step;
     cellPos(this.stage, g.truck, g.index, c.stack, c.col, c.to);
     cellScale(this.stage, g.truck, c.s1);
     c.q1.set(this.stage.truckTurn[g.truck]);
@@ -342,9 +387,9 @@ export class GameView extends Component {
     this.pieces.unseat(c);
     if (this.onLeave) this.onLeave();
     const mr = c.node.getComponent(MeshRenderer)!;
-    mr.mesh = this.stage.cubeMesh;
+    mr.mesh = c.shape;
     mr.setMaterial(this.stage.colorMats[c.color], 0);
-    c.s1.set(c.size, c.size, c.size);
+    c.s1.set(c.size * c.prop.x, c.size * c.prop.y, c.size * c.prop.z);
   }
 
   private launch(c: Cube) {
@@ -352,6 +397,16 @@ export class GameView extends Component {
     if (c.mode === 'toTruck') this.takePlace(c);
     else this.leaveBlock(c);
     rememberStart(c);
+    if (c.mode === 'toBelt') this.startPour(c);
+  }
+
+  private startPour(c: Cube) {
+    const p = cellLocal(this.stage, c.truck, c.home, c.stack, c.col);
+    c.pouring = true; c.pourAge = 0;
+    c.pourStart = c.pourAlong = p.along; c.pourAcross = p.across; c.pourHeight = p.height;
+    // Settle into line, upright and facing along the truck, before the hop onto the belt.
+    c.q0.set(this.stage.truckTurn[c.truck]);
+    c.node.setRotation(c.q0);
   }
 
   private joinBelt(c: Cube, visualOffset: number) {

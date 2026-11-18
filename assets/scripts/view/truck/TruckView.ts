@@ -20,7 +20,6 @@ const TAP_MARGIN_END = 0.4;
 
 export class TruckView {
   onComplete: ((truck: number) => void) | null = null;
-  isForming: (truck: number) => boolean = () => false;
 
   private nodes: Node[] = [];
   private blockRoots: Node[] = [];
@@ -100,7 +99,7 @@ export class TruckView {
     this.peak[i] = Math.max(this.peak[i], shown);
     const marks: number[] = [];
     if (this.leaveImpression) for (let at = shown; at < this.peak[i]; at++) marks.push(at);
-    this.blocks.draw(this.blockRoots[i], i, shown, marks, !this.isForming(i) && !this.done[i]);
+    this.blocks.draw(this.blockRoots[i], i, shown, marks);
   }
 
   checkComplete(truck: number) {

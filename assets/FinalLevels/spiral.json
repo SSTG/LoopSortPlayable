@@ -1,7 +1,7 @@
 {
   "caption": "Only Sharp Minds Can Solve This!",
   "tapsToRedirect": -1,
-  "truckCapacity": 8,
+  "truckCapacity": 16,
   "beltCapacity": 31,
   "beltLimit": 22,
   "colors": {
@@ -10,22 +10,11 @@
     "C": "#32DDE6"
   },
   "trucks": [
-    "RRYYCCC",
-    "CRYRYYYY",
-    "YCYYYRRR",
-    "CYRCYRRR",
-    "CYCRCCC",
-    "YCRYRCCC"
+    "RRYYCCCCRYRYYYY",
+    "YCYYYRRRCYRCYRRR",
+    "CYCRCCCYCRYRCCC"
   ],
   "belt": "RR",
-  "truckPlaces": [
-    [-3.05, 1.41, 90],
-    [-1.65, 0.38, 90],
-    [-0.25, 0.08, 90],
-    [1.15, 0.1, 90],
-    [2.55, 0.53, 90],
-    [3.95, 1.73, 90]
-  ],
   "beltPath": {
     "points": [
       [0, 7.77],

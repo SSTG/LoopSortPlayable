@@ -1,10 +1,13 @@
-import { Node, Vec3, Quat } from 'cc';
+import { Node, Vec3, Quat, Mesh } from 'cc';
 
 export interface Pieces {
   truck: number;
   index: number;
   color: string;
   cells: (Cube | null)[];
+  // Neighbouring units of the same run (place index - 1 and + 1): faces against them are inside the merged block.
+  before: Pieces | null;
+  after: Pieces | null;
 }
 
 export interface Landing {
@@ -19,6 +22,9 @@ export interface Landing {
 
 export interface Cube {
   node: Node;
+  shape: Mesh;
+  // How this cube's proportions differ from a perfect cube (multiplies its size per axis).
+  prop: Vec3;
   color: string;
   mode: 'belt' | 'toBelt' | 'toTruck' | 'landed';
   slot: number;
@@ -62,4 +68,11 @@ export interface Cube {
   pieces: Pieces | null;
   stack: number;
   col: number;
+  // Pouring out of the truck after a tap (see CubePour): where it started and how far in from the mouth it is now.
+  pouring: boolean;
+  pourAge: number;
+  pourStart: number;
+  pourAlong: number;
+  pourAcross: number;
+  pourHeight: number;
 }

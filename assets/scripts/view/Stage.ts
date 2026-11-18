@@ -11,7 +11,8 @@ export interface Stage {
   blockWidth: number;
   blockH: number;
   truckTurn: Quat[];
-  cubeMesh: Mesh;
+  // Plump cube shapes, a little different from each other; each cube picks one.
+  cubeShapes: Mesh[];
   colorMats: Record<string, Material>;
   blockMats: Record<string, Material>;
 }

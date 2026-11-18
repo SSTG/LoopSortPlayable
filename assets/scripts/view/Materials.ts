@@ -24,20 +24,34 @@ export function makeMaterial(hex: string, instanced = false, twoSided = false, r
   return m;
 }
 
-export function makeToon(nameOrHex: string, instanced: boolean, twoSided: boolean): Material {
+// Optional look on top of the toon ramp: a broad, strong highlight, a sheen at the edges and a softer, waxier ramp.
+export interface Gloss { highlight: number; size: number; rim: number; wax: number }
+
+function dimmed(hex: string, k: number): Color {
+  const c = new Color().fromHEX(hex);
+  return k === 1 ? c : new Color(Math.round(c.r * k), Math.round(c.g * k), Math.round(c.b * k), c.a);
+}
+
+// dim < 1 darkens the whole colour, for surfaces in shadow (such as the inside of a block with cubes missing).
+export function makeToon(nameOrHex: string, instanced: boolean, twoSided: boolean, gloss?: Gloss, dim = 1): Material {
   const c = toonColor(nameOrHex);
-  if (!toonEffect) return makeMaterial(c.base, instanced, twoSided, 0.36);
+  if (!toonEffect) {
+    const m = makeMaterial(c.base, instanced, twoSided, gloss ? 0.2 : 0.36);
+    if (dim !== 1) m.setProperty('mainColor', dimmed(c.base, dim));
+    return m;
+  }
   const m = new Material();
   m.initialize({
     effectAsset: toonEffect,
     defines: instanced ? { USE_INSTANCING: true } : {},
     states: twoSided ? { rasterizerState: { cullMode: gfx.CullMode.NONE } } : undefined,
   });
-  m.setProperty('mainColor', new Color().fromHEX(c.base));
-  m.setProperty('highColor', new Color().fromHEX(c.high));
-  m.setProperty('shadeColor', new Color().fromHEX(c.shade));
+  m.setProperty('mainColor', dimmed(c.base, dim));
+  m.setProperty('highColor', dimmed(c.high, dim));
+  m.setProperty('shadeColor', dimmed(c.shade, dim));
   m.setProperty('specColor', new Color().fromHEX(c.spec));
-  m.setProperty('rampParams', new Vec4(c.threshold, c.smoothing, c.roughness, TOON_LIGHT));
+  m.setProperty('rampParams', new Vec4(c.threshold, c.smoothing, gloss ? gloss.size : c.roughness, TOON_LIGHT));
+  if (gloss) m.setProperty('glossParams', new Vec4(gloss.highlight, gloss.rim, 3, gloss.wax));
   return m;
 }
 

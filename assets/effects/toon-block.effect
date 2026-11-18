@@ -12,6 +12,7 @@ CCEffect %{
         ambientSky:     { value: [1.0, 1.0, 1.0, 1.0] }
         ambientEquator: { value: [0.456, 0.456, 0.456, 1.0] }
         ambientGround:  { value: [0.004, 0.004, 0.004, 1.0] }
+        glossParams:    { value: [1.0, 0.0, 3.0, 0.0] }
     - vert: shadow-caster-vs:vert
       frag: shadow-caster-fs:frag
       phase: shadow-caster
@@ -31,6 +32,8 @@ CCProgram shared-ubos %{
     vec4 ambientSky;
     vec4 ambientEquator;
     vec4 ambientGround;
+    // x: highlight strength, y: rim sheen strength, z: rim sheen falloff, w: waxy softness of the light ramp (0 = off).
+    vec4 glossParams;
   };
 }%
 
@@ -91,7 +94,8 @@ CCProgram toon-fs %{
 
     float ndl = dot(N, L);
     float wrapped = ndl * 0.5 + 0.5;
-    float ramp = smoothstep(rampParams.x - rampParams.y * 0.5, rampParams.x + rampParams.y * 0.5, wrapped);
+    float soft = mix(rampParams.y, 1.0, glossParams.w);
+    float ramp = smoothstep(rampParams.x - soft * 0.5, rampParams.x + soft * 0.5, wrapped);
 
     float shadow = 1.0;
     #if CC_RECEIVE_SHADOW && CC_SHADOW_TYPE == CC_SHADOW_MAP
@@ -117,7 +121,11 @@ CCProgram toon-fs %{
     float a2 = rough * rough;
     float d = (nh * a2 - nh) * nh + 1.0;
     float spec = 0.31830988618 * a2 / (d * d + 1e-4) * 3.14159265359 * 0.05 / (rough * rough + 1.0);
-    color += spec * shadow * clamp(ndl, 0.0, 1.0) * light * specColor.rgb;
+    color += spec * glossParams.x * shadow * clamp(ndl, 0.0, 1.0) * light * specColor.rgb;
+
+    // Soft sheen towards the silhouette, lifting the edges like light caught in polished wax.
+    float rim = pow(1.0 - clamp(dot(N, V), 0.0, 1.0), glossParams.z) * glossParams.y;
+    color = mix(color, mix(baseColor.rgb, vec3(1.0), 0.45) * (0.6 + 0.4 * shadow), clamp(rim, 0.0, 1.0));
 
     return CCFragOutput(vec4(color, 1.0));
   }

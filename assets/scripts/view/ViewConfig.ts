@@ -13,13 +13,11 @@ export const PIECE_COUNT = PIECE_ROWS * PIECE_COLS;
 export const PIECE_RULES = [[3, 0, 5], [3, 1, 5], [2, 0, 5], [2, 1, 5], [3, 0, 4], [3, 1, 4], [2, 0, 4], [2, 1, 4],
   [3, 0], [3, 1], [2, 0], [2, 1], [5, 3], [5, 2], [5, 0], [5, 1], [4, 3], [4, 2], [4, 0], [4, 1]];
 
-export const FILE_GAP = 0.03;
 export const GLIDE = 7;
 export const HIT_FROM = 0.6;
 export const BLOCK_TALL = 1;
 export const BLOCK_GAP = 0.001;
 export const BLOCK_ROUND = 0.045;
-export const OUTLINE_H = 0.07;
 export const UP = new Vec3(0, 1, 0);
 export const TOON_LIGHT = Math.pow(0.65, 2.2);
 
@@ -36,13 +34,20 @@ export const tuning = {
   creep: 0.2,
   pushRadius: 0.24,
   stragglers: 6,
-  topOutline: 0.005,
+  cubeVariety: 0.08,
+  popStrength: 0.5,
+  pourTime: 0.3,
+  pourSway: 0.3,
+  pourWave: 5,
+  pourDrift: 9,
+  cubeGloss: { highlight: 6, size: 0.62, rim: 0.35, wax: 0.45 },
   outlineThick: 0.045,
   outlineRise: 0.45,
   outlineFade: 0.4,
   lidExtra: 0.21,
   lidTime: 0.6,
   tickTime: 0.9,
+  innerShadow: 0.4,
   impressionColor: '#8F86AC',
   impressionGap: 0.05,
   impressionCorner: 0.07,
