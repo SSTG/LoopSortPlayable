@@ -24,6 +24,11 @@ const { ccclass, property } = _decorator;
 const UNUSED_BUS_PARTS = ['polySurface3', 'TopCover'];
 const POUR_SPACING = 1.1; // gap between cubes in the pouring chain, in cube sizes
 const LANDED_OFF_SPOT = 0.05;
+// Cubes flying into a truck touch down at least this many seconds apart, so a block builds one cube at a time even
+// when a whole row of them reaches the truck's mouth together.
+const LAND_GAP = 0.045;
+// A held-back cube's flight may stretch to at most this many times the normal fly-in time.
+const MAX_FLIGHT_STRETCH = 2.5;
 
 @ccclass('GameView')
 export class GameView extends Component {
@@ -115,6 +120,8 @@ export class GameView extends Component {
   private arriveList: Cube[] = [];
   private tmp = new Vec3();
   private clock = 0;
+  // Per truck, the clock time the last cube scheduled to land there touches down.
+  private lastLanding: number[] = [];
   private tmp2 = new Vec3();
 
   get root(): Node { return this.node; }
@@ -155,6 +162,7 @@ export class GameView extends Component {
     this.landings = [];
     this.cubes = [];
     this.waiting = state.trucks.map(() => []);
+    this.lastLanding = state.trucks.map(() => -Infinity);
     state.ring.forEach((color, slot) => { if (color) this.spawnBeltUnit(slot, color); });
     this.trucks.reset();
   }
@@ -211,6 +219,7 @@ export class GameView extends Component {
     });
     for (const g of this.landings) if (g.truck === truck) g.dead = true;
     this.landings = this.landings.filter(g => !g.dead);
+    this.lastLanding[truck] = -Infinity;
     this.trucks.clearIncoming(truck);
     this.trucks.redraw(truck);
   }
@@ -263,6 +272,7 @@ export class GameView extends Component {
       }
     }
     this.motion.settle(dt, onBelt, arriving);
+    this.pieces.step(dt);
     if (removed) this.cubes = this.cubes.filter(c => c.node);
   }
 
@@ -383,6 +393,15 @@ export class GameView extends Component {
     mouthPos(this.stage, g.truck, c.ctrl);
   }
 
+  // Lengthens this cube's flight if needed so it lands a beat after the cube before it in the same truck. Cubes
+  // take their places in launch order, so landing in that order keeps the block filling row by row.
+  private spaceLanding(c: Cube) {
+    const natural = this.clock + tuning.flyIn;
+    const land = Math.min(Math.max(natural, this.lastLanding[c.truck] + LAND_GAP), this.clock + tuning.flyIn * MAX_FLIGHT_STRETCH);
+    c.dur = land - this.clock;
+    this.lastLanding[c.truck] = Math.max(this.lastLanding[c.truck], land);
+  }
+
   private leaveBlock(c: Cube) {
     this.pieces.unseat(c);
     if (this.onLeave) this.onLeave();
@@ -394,7 +413,7 @@ export class GameView extends Component {
 
   private launch(c: Cube) {
     c.launched = true;
-    if (c.mode === 'toTruck') this.takePlace(c);
+    if (c.mode === 'toTruck') { this.takePlace(c); this.spaceLanding(c); }
     else this.leaveBlock(c);
     rememberStart(c);
     if (c.mode === 'toBelt') this.startPour(c);
@@ -418,7 +437,7 @@ export class GameView extends Component {
   private land(c: Cube) {
     const g = c.group!;
     c.mode = 'landed';
-    this.pieces.seat(c, g.pieces, c.stack, c.col);
+    this.pieces.seat(c, g.pieces, c.stack, c.col, true);
     this.pieces.fit(g.pieces);
     if (this.onPiece) this.onPiece();
     if (--g.left === g.need - 1 && g.left > 0) this.trucks.redraw(g.truck);

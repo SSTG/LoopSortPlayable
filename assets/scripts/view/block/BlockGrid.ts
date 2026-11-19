@@ -60,6 +60,25 @@ export function innerShade(stack: number, col: number, cells: (Cube | null)[], b
   return Math.min(1, open / 2) * (0.55 + 0.45 * depth);
 }
 
+// Which sides of a piece face a gap inside the block, for the soft hole shading in the block shader:
+// [above, -x (col - 1), +x (col + 1), -z (slice + 1), +z (slice - 1)], each 1 when open. Written into `out`.
+export function holeSides(stack: number, col: number, cells: (Cube | null)[], before: Pieces | null, after: Pieces | null, out: number[]): number[] {
+  const gap = (slice: number, layer: number, c: number) => {
+    if (layer < 0 || layer >= PIECE_LAYERS || c < 0 || c >= PIECE_COLS) return 0;
+    let from = cells;
+    if (slice < 0) { if (!before) return 0; from = before.cells; slice += PIECE_SLICES; }
+    else if (slice >= PIECE_SLICES) { if (!after) return 0; from = after.cells; slice -= PIECE_SLICES; }
+    return from[(slice * PIECE_LAYERS + layer) * PIECE_COLS + c] ? 0 : 1;
+  };
+  const slice = Math.floor(stack / PIECE_LAYERS), layer = stack % PIECE_LAYERS;
+  out[0] = gap(slice, layer + 1, col);
+  out[1] = gap(slice, layer, col - 1);
+  out[2] = gap(slice, layer, col + 1);
+  out[3] = gap(slice + 1, layer, col);
+  out[4] = gap(slice - 1, layer, col);
+  return out;
+}
+
 export function freeSides(stack: number, col: number, cells?: (Cube | null)[], before?: Pieces | null, after?: Pieces | null): number {
   const taken = (slice: number, layer: number, c: number) => {
     if (layer < 0 || layer >= PIECE_LAYERS || c < 0 || c >= PIECE_COLS) return false;

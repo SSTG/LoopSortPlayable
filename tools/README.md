@@ -6,6 +6,10 @@ Levels live in `assets/resources/levels/*.json`. The `Bootstrap` component on th
 ```json
 {
   "caption": "Harder than you think", // text shown at the top of the screen
+  "captionColor": "#2BB4E3",           // optional: text colour of the caption; default is the label's colour in the scene
+  "background": "#14004A",             // optional: background colour of the game; default is the scene camera's colour
+  "zoom": 1,                           // optional: camera closeness. 1 fits the whole level; above 1 keeps the belt at the top
+                                       // and lets the truck ends go off the bottom (only the top 1/zoom of the level shows)
   "tapsToRedirect": -1,                // the store opens on this tap and every later one; -1 = only when the level is completed
   "truckCapacity": 15,                 // units one truck can hold
   "beltCapacity": 16,                  // units the belt can hold (the x/16 counter)

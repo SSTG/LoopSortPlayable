@@ -13,6 +13,9 @@ CCEffect %{
         ambientEquator: { value: [0.456, 0.456, 0.456, 1.0] }
         ambientGround:  { value: [0.004, 0.004, 0.004, 1.0] }
         glossParams:    { value: [1.0, 0.0, 3.0, 0.0] }
+        holeOpen:       { value: [0.0, 0.0, 0.0, 0.0] }
+        holeParams:     { value: [0.0, 0.0, 0.0, 3.0] }
+        holeExtent:     { value: [0.5, 0.5, 0.5, 0.0] }
     - vert: shadow-caster-vs:vert
       frag: shadow-caster-fs:frag
       phase: shadow-caster
@@ -34,6 +37,13 @@ CCProgram shared-ubos %{
     vec4 ambientGround;
     // x: highlight strength, y: rim sheen strength, z: rim sheen falloff, w: waxy softness of the light ramp (0 = off).
     vec4 glossParams;
+    // Shade inside a partly-built block (all zero for anything else). Open sides, in the piece's own axes, each 0..1
+    // so they can fade: x: -x, y: +x, z: -z, w: +z.
+    vec4 holeOpen;
+    // x: open above (0..1), y: shade strength, z: layers between this piece and the block top, w: layers in a block.
+    vec4 holeParams;
+    // xyz: the piece mesh's half size, to place a fragment within it.
+    vec4 holeExtent;
   };
 }%
 
@@ -48,6 +58,8 @@ CCProgram toon-vs %{
 
   out vec3 v_position;
   out mediump vec3 v_normal;
+  out vec3 v_objPos;
+  out mediump vec3 v_objNormal;
   #if CC_RECEIVE_SHADOW
     out mediump vec2 v_shadowBias;
   #endif
@@ -65,6 +77,8 @@ CCProgram toon-vs %{
       v_shadowBias = CCGetShadowBias();
     #endif
     v_normal = (matWorldIT * vec4(In.normal, 0.0)).xyz;
+    v_objPos = In.position.xyz;
+    v_objNormal = In.normal;
 
     CC_TRANSFER_SHADOW(pos);
     return cc_matProj * (cc_matView * matWorld) * In.position;
@@ -82,9 +96,30 @@ CCProgram toon-fs %{
 
   in vec3 v_position;
   in mediump vec3 v_normal;
+  in vec3 v_objPos;
+  in mediump vec3 v_objNormal;
   #if CC_RECEIVE_SHADOW
     in mediump vec2 v_shadowBias;
   #endif
+
+  // How much light the hole next to this piece takes away (0 = none). Weighted by how far the surface turns towards
+  // each open side, so the shade rolls smoothly round the piece's rounded edges instead of filling a square, and
+  // graded by depth, so it deepens continuously from the lip of the hole to its floor.
+  float holeShade () {
+    if (holeParams.y <= 0.0) return 0.0;
+    vec3 n = normalize(v_objNormal);
+    vec3 q = clamp(v_objPos / max(holeExtent.xyz, vec3(1e-4)), -1.0, 1.0);
+    vec4 towards = pow(max(vec4(-n.x, n.x, -n.z, n.z), 0.0), vec4(1.5));
+    float wall = clamp(dot(towards, holeOpen), 0.0, 1.0);
+    float floorW = pow(max(n.y, 0.0), 1.5) * holeParams.x;
+    // A soft round pool on the floor, a little deeper towards its rim where it meets the walls.
+    floorW *= mix(0.8, 1.0, smoothstep(0.2, 1.3, length(q.xz)));
+    float depth = clamp((holeParams.z + 0.5 - 0.5 * q.y) / max(holeParams.w, 1.0), 0.0, 1.0);
+    depth = depth * depth * (3.0 - 2.0 * depth);
+    float wallS = wall * mix(0.2, 1.0, depth);
+    float floorS = floorW * mix(0.55, 1.0, depth);
+    return clamp(max(wallS, floorS) + 0.3 * min(wallS, floorS), 0.0, 1.0) * holeParams.y;
+  }
 
   vec4 frag () {
     vec3 N = normalize(v_normal);
@@ -126,6 +161,8 @@ CCProgram toon-fs %{
     // Soft sheen towards the silhouette, lifting the edges like light caught in polished wax.
     float rim = pow(1.0 - clamp(dot(N, V), 0.0, 1.0), glossParams.z) * glossParams.y;
     color = mix(color, mix(baseColor.rgb, vec3(1.0), 0.45) * (0.6 + 0.4 * shadow), clamp(rim, 0.0, 1.0));
+
+    color *= 1.0 - holeShade();
 
     return CCFragOutput(vec4(color, 1.0));
   }

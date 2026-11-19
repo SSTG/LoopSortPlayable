@@ -1,5 +1,8 @@
 {
   "caption": "Harder than you think",
+  "captionColor": "#2BB4E3",
+  "background": "#14004A",
+  "zoom": 1,
   "tapsToRedirect": -1,
   "truckCapacity": 15,
   "beltCapacity": 16,

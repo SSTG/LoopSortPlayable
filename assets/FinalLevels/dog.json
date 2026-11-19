@@ -1,5 +1,8 @@
 {
   "caption": "Only 10% Can Beat This Level!",
+  "captionColor": "#2BB4E3",
+  "background": "#14004A",
+  "zoom": 1,
   "tapsToRedirect": -1,
   "truckCapacity": 7,
   "beltCapacity": 24,

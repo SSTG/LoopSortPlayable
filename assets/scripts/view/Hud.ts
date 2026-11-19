@@ -85,14 +85,17 @@ export class Hud extends Component {
     return this.screenFit || (this.screenFit = new ScreenFit(this.node));
   }
 
-  init(handlers: HudHandlers, captionText: string) {
+  init(handlers: HudHandlers, captionText: string, captionColor: string | null = null) {
     if (this.touchCatcher) {
       this.touchCatcher.on(Node.EventType.TOUCH_START, (e: EventTouch) => {
         const p = e.getLocation();
         handlers.onGameTouch(p.x, p.y);
       });
     }
-    if (this.caption) this.caption.string = captionText;
+    if (this.caption) {
+      this.caption.string = captionText;
+      if (captionColor) this.caption.color = new Color().fromHEX(captionColor);
+    }
     if (this.counterLabel) this.normalColor = this.counterLabel.color.clone();
     this.press(this.download, () => handlers.onDownload());
     this.press(this.logo, () => handlers.onDownload());

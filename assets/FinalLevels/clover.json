@@ -1,5 +1,8 @@
 {
   "caption": "Test Your Puzzle-Solving Skills!",
+  "captionColor": "#4B3763",
+  "background": "#D4B5DE",
+  "zoom": 1,
   "tapsToRedirect": -1,
   "truckCapacity": 12,
   "beltCapacity": 20,

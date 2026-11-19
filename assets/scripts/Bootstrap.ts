@@ -1,7 +1,7 @@
-import { _decorator, Component, Camera, Vec3, geometry, sys, JsonAsset, Prefab, Material, EffectAsset } from 'cc';
+import { _decorator, Component, Camera, Color, Vec3, geometry, sys, JsonAsset, Prefab, Material, EffectAsset } from 'cc';
 import { DEBUG } from 'cc/env';
 import type { GameState, GameEvent, LevelData } from './core/Rules';
-import { createState, tap, tick, load, canTap, tapCount, isWon, isLost, isComplete, levelCaption, redirectDue, beltLimit } from './core/Rules';
+import { createState, tap, tick, load, canTap, tapCount, isWon, isLost, isComplete, levelCaption, levelCaptionColor, levelBackground, levelZoom, redirectDue, beltLimit } from './core/Rules';
 import { buildLayout } from './core/Layout';
 import type { Layout } from './core/Layout';
 import { findLevel, collectGameAssets } from './view/GameAssets';
@@ -137,6 +137,8 @@ export class Bootstrap extends Component {
       throw new Error('The Game node needs its Camera, Game View, Hud and Sound Manager set in the Inspector');
     }
     this.level = assets.level;
+    const bg = levelBackground(this.level);
+    if (bg) this.camera.clearColor = new Color().fromHEX(bg);
     this.layout = buildLayout(this.level);
     this.state = createState(this.level, this.layout.gates);
     this.gameView.init(assets, this.layout, this.state, this.beltTick, this.leaveImpression);
@@ -146,7 +148,7 @@ export class Bootstrap extends Component {
       onDownload: () => this.onDownload(),
       onRetry: () => this.restart(),
       onMute: m => this.soundManager.setMuted(m),
-    }, levelCaption(this.level));
+    }, levelCaption(this.level), levelCaptionColor(this.level));
     this.gameView.onComplete = truck => this.onTruckComplete(truck);
     this.showFinishedChecks();
     this.fitCamera();
@@ -235,7 +237,8 @@ export class Bootstrap extends Component {
   }
 
   private fitCamera() {
-    fitCamera(this.camera, this.layout.bounds, this.hud, { top: this.topReserve, bottom: this.bottomReserve, wideBottom: this.wideBottomReserve });
+    fitCamera(this.camera, this.layout.bounds, this.hud, { top: this.topReserve, bottom: this.bottomReserve, wideBottom: this.wideBottomReserve },
+      levelZoom(this.level));
   }
 
   private runBelt(dt: number) {

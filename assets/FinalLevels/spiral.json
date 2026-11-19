@@ -1,5 +1,8 @@
 {
   "caption": "Only Sharp Minds Can Solve This!",
+  "captionColor": "#4B3763",
+  "background": "#D4B5DE",
+  "zoom": 1,
   "tapsToRedirect": -1,
   "truckCapacity": 16,
   "beltCapacity": 31,

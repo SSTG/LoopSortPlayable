@@ -14,6 +14,10 @@ export function validateLevel(l: LevelData): void {
     });
   }
   if (l.caption !== undefined && typeof l.caption !== 'string') throw new Error('caption must be text');
+  const hex = (v: unknown) => typeof v === 'string' && /^#[0-9a-fA-F]{6}$/.test(v);
+  if (l.background !== undefined && !hex(l.background)) throw new Error('background must be a hex colour like "#14004A"');
+  if (l.captionColor !== undefined && !hex(l.captionColor)) throw new Error('captionColor must be a hex colour like "#2BB4E3"');
+  if (l.zoom !== undefined && !(typeof l.zoom === 'number' && l.zoom >= 1)) throw new Error('zoom must be a number, 1 or more');
   const r = l.tapsToRedirect;
   if (r !== undefined && !(Number.isInteger(r) && (r === -1 || r > 0))) throw new Error('tapsToRedirect must be -1 (redirect only on completion) or a whole number of taps, 1 or more');
   const bp = l.beltPath;

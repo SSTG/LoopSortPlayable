@@ -1,5 +1,8 @@
 {
   "caption": "Prove You're a Puzzle Master!",
+  "captionColor": "#2BB4E3",
+  "background": "#14004A",
+  "zoom": 1.01,
   "tapsToRedirect": -1,
   "truckCapacity": 8,
   "beltCapacity": 23,
