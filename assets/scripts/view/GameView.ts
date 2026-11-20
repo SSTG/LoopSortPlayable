@@ -122,11 +122,18 @@ export class GameView extends Component {
   private clock = 0;
   // Per truck, the clock time the last cube scheduled to land there touches down.
   private lastLanding: number[] = [];
+  // Per truck, the clock time the last cube of its latest tap starts pouring out. A quick second tap on the same
+  // truck queues its chain behind that one instead of pouring through the cubes still leaving the truck.
+  private pourFree: number[] = [];
   private tmp2 = new Vec3();
 
   get root(): Node { return this.node; }
 
   get busy(): boolean { return this.cubes.some(c => c.mode !== 'belt'); }
+
+  // Blocks the rules have already dropped into a truck whose cubes are still on the belt or flying in: each leaves the
+  // belt's count only once its last cube lands and the block is whole in the truck.
+  get blocksLanding(): number { return this.landings.length; }
 
   init(assets: GameAssets, layout: Layout, state: GameState, tickDur: number, leaveImpression = true) {
     this.tickDur = tickDur;
@@ -163,6 +170,7 @@ export class GameView extends Component {
     this.cubes = [];
     this.waiting = state.trucks.map(() => []);
     this.lastLanding = state.trucks.map(() => -Infinity);
+    this.pourFree = state.trucks.map(() => -Infinity);
     state.ring.forEach((color, slot) => { if (color) this.spawnBeltUnit(slot, color); });
     this.trucks.reset();
   }
@@ -182,6 +190,10 @@ export class GameView extends Component {
     // Cubes leave one after another, a cube's length apart, so they pour out as a single chain (capped at breakTime).
     const count = colors.length * PIECE_COUNT;
     const every = count > 1 ? Math.min(tuning.cubeSize * POUR_SPACING / pourSpeed(this.stage, truck), tuning.breakTime / (count - 1)) : 0;
+    // Wait for the previous chain from this truck (if still pouring) to get one cube's spacing ahead.
+    const gap = tuning.cubeSize * POUR_SPACING / pourSpeed(this.stage, truck);
+    const start = Math.max(0, this.pourFree[truck] + gap - this.clock);
+    this.pourFree[truck] = this.clock + start + (count - 1) * every;
     const fromLeft = leftFirst(this.stage, truck);
     // One tap sends a run of one colour, drawn in the truck as a single block: link its units so it breaks apart as one.
     const all: Pieces[] = [];
@@ -198,6 +210,7 @@ export class GameView extends Component {
         c.t = 0; c.dur = tuning.flyOut; c.launched = false; c.ride = false;
         c.delay = (k * PIECE_COUNT + row * PIECE_COLS + (fromLeft ? PIECE_COLS - 1 - col : col)) * every;
         c.wob = c.delay * 45;
+        c.delay += start;
         c.q1.set(c.node.rotation);
         mouthPos(this.stage, truck, c.ctrl);
         this.pieces.seat(c, p, PIECE_ROWS - 1 - row, col);

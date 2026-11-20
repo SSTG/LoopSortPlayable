@@ -120,7 +120,7 @@ export class Bootstrap extends Component {
     if (this.hud.fit()) { this.fitCamera(); this.hint.refresh(); }
     if (!this.ended) this.runBelt(dt);
     this.gameView.step(dt, this.ended ? 0 : this.clock.progress);
-    this.hud.setCounter(load(this.state), beltLimit(this.level));
+    this.hud.setCounter(this.shownLoad(), beltLimit(this.level));
     this.placeChecks();
     this.winHold = Math.max(0, this.winHold - dt);
     if (this.ended || this.checkEnd()) return;
@@ -236,6 +236,12 @@ export class Bootstrap extends Component {
     this.gameView.onEvents(events, this.clock.progress);
   }
 
+  // The belt counter: blocks on the belt, still counting each block that is on its way into a truck until it has
+  // formed there. A tap made meanwhile can add to it, so it is capped at the limit it counts against.
+  private shownLoad(): number {
+    return Math.min(beltLimit(this.level), load(this.state) + this.gameView.blocksLanding);
+  }
+
   private fitCamera() {
     fitCamera(this.camera, this.layout.bounds, this.hud, { top: this.topReserve, bottom: this.bottomReserve, wideBottom: this.wideBottomReserve },
       levelZoom(this.level));
@@ -267,6 +273,8 @@ export class Bootstrap extends Component {
       this.soundManager.play('fail');
       this.hud.showFail();
       this.adEvent('end');
+      // No moves left: send the player to the store straight away.
+      this.onDownload();
       return true;
     }
     return false;

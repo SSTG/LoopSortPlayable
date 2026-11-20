@@ -35,12 +35,13 @@ test('an impossible level returns null', () => {
 });
 test('every shipped level is solvable and its solution replays to a win', () => {
   const files = ['levels/', 'FinalLevels/'].flatMap(d => {
-    const dir = new URL('../assets/resources/' + d, import.meta.url);
+    const dir = new URL('../assets/' + d, import.meta.url);
     return readdirSync(dir).filter(f => f.endsWith('.json')).map(f => new URL(f, dir));
   });
   assert.ok(files.length > 0, 'no level files');
   for (const f of files) {
     const l = JSON.parse(readFileSync(f, 'utf8'));
+    if (String(f).includes('/FinalLevels/')) assert.ok(l.trucks.length <= 6, `${f} has ${l.trucks.length} trucks (final levels allow 6)`);
     const sol = solve(l, buildLayout(l).gates);
     assert.ok(sol, `${f} unsolvable`);
     assert.equal(replayWins(l, sol), true, String(f));

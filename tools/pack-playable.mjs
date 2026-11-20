@@ -166,7 +166,7 @@ function main() {
   if (unknown.length) throw new Error(`Unknown network: ${unknown.join(', ')} (known: ${Object.keys(NETWORKS).join(', ')})`);
   if (!fs.existsSync(path.join(buildDir, 'index.html'))) throw new Error(`No web-mobile build in ${buildDir}. Build the project for Web Mobile first.`);
   for (const level of levels) {
-    if (level && !fs.existsSync(path.join(PROJECT, 'assets/resources', level.includes('/') ? level + '.json' : `levels/${level}.json`))) {
+    if (level && !fs.existsSync(path.join(PROJECT, 'assets', level.includes('/') ? level + '.json' : `levels/${level}.json`))) {
       throw new Error(`No such level: ${level}`);
     }
   }

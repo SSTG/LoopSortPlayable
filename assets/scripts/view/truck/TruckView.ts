@@ -1,5 +1,5 @@
 import { Node, Vec3, Quat, MeshRenderer, tween, Tween } from 'cc';
-import { isComplete } from '../../core/Rules';
+import { isComplete, truckColor } from '../../core/Rules';
 import type { Stage } from '../Stage';
 import { inTruck } from '../Stage';
 import type { Parts } from '../mesh/ModelBake';
@@ -136,9 +136,10 @@ export class TruckView {
   }
 
   private bodyColor(i: number): string {
-    const level = this.stage.state.level, keys = Object.keys(level.colors);
+    const level = this.stage.state.level;
     const pick = level.truckColors && level.truckColors[i];
-    return pick ? (level.colors[pick] || pick) : level.colors[keys[i % keys.length]];
+    // A hex code in truckColors paints the truck that colour (cosmetic levels only).
+    return pick && !level.colors[pick] ? pick : level.colors[truckColor(level, i)];
   }
 
   private buildLid(width: number, length: number, hex: string): Node {

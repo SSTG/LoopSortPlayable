@@ -118,6 +118,7 @@ for (let attempt = 0; attempt < 300; attempt++) {
   }
   const level = {
     caption: 'Harder than you think', tapsToRedirect: -1,
+    ...(process.argv.includes('--match') ? { matchTruckColor: true } : {}),
     truckCapacity: CAP, beltCapacity: BELT, ...(LIMIT ? { beltLimit: LIMIT } : {}),
     colors: Object.fromEntries(PALETTE.slice(0, K)),
     trucks: trucks.map(t => t.join('')), belt: belt.join(''),

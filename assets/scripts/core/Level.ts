@@ -9,6 +9,9 @@ export interface LevelData {
   belt: string;
   beltPath: BeltPathData;
   truckColors?: string[];
+  // true: a truck only takes blocks of its own colour (truckColor) and is complete only when full of that colour.
+  // false or left out: the truck's colour is only paint, and any colour can fill it.
+  matchTruckColor?: boolean;
   truckPlaces?: number[][];
 
   caption?: string;
@@ -20,6 +23,18 @@ export interface LevelData {
   // How close the camera sits: 1 frames the whole level; above 1 comes closer, keeping the belt at the top and
   // letting the far end of the level go off the bottom of the screen (only the top 1/zoom of its height shows).
   zoom?: number;
+}
+
+// The colour (a key of `colors`) of truck i: `truckColors[i]` if given, otherwise the colours in turn.
+export function truckColor(l: LevelData, i: number): string {
+  const pick = l.truckColors && l.truckColors[i];
+  if (pick && l.colors[pick]) return pick;
+  const keys = Object.keys(l.colors);
+  return keys[i % keys.length];
+}
+
+export function matchesTruckColor(l: LevelData): boolean {
+  return l.matchTruckColor === true;
 }
 
 export function beltLimit(l: LevelData): number {

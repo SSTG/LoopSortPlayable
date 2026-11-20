@@ -4,28 +4,24 @@
   "background": "#14004A",
   "zoom": 1,
   "tapsToRedirect": -1,
+  "matchTruckColor": false,
   "truckCapacity": 7,
   "beltCapacity": 19,
   "beltLimit": 19,
   "colors": {
     "M": "#F224F2",
     "O": "#F2682A",
-    "W": "#FFF1F8",
-    "B": "#3A7BF2",
-    "G": "#35C24A",
-    "Y": "#F5C52A"
+    "B": "#3A7BF2"
   },
   "trucks": [
-    "MGBYOGG",
-    "OMMMBWW",
-    "BYOWYMB",
-    "OOBGMMW",
-    "WOMOGW",
-    "OMYOGB",
-    "BYWOGMM",
-    "OOOMMYM"
+    "OBOBMM",
+    "BMBMMMM",
+    "MBBOOO",
+    "MMMOOOO",
+    "OBM",
+    "OBMMOOO"
   ],
-  "belt": "OY",
+  "belt": "BBBBBB",
   "beltPath": {
     "points": [
       [3.6, 3.04, 0],

@@ -1,6 +1,6 @@
 # Loop Sort level tools
 
-Levels live in `assets/resources/levels/*.json`. The `Bootstrap` component on the `Game` node in
+Levels live in `assets/levels/*.json`. The `Bootstrap` component on the `Game` node in
 `assets/scene/main.scene` has a `levelName` field that picks which one to load.
 
 ```json
@@ -16,6 +16,9 @@ Levels live in `assets/resources/levels/*.json`. The `Bootstrap` component on th
   "beltLimit": 12,                     // optional: most units allowed on the belt (the x/12 counter); default beltCapacity
   "colors": { "M": "#F224F2", "O": "#F2682A", "W": "#FFF1F8" },
   "trucks": ["OMMW", "W", "..."],      // one string per truck, bottom -> top, one letter per unit
+  "truckColors": ["M", "O", "..."],    // optional: each truck's body colour; default is the colours of `colors` in turn
+  "matchTruckColor": false,            // optional: true = a truck only takes blocks of its own colour and is complete only
+                                       // when full of that colour; false (default) = the truck's colour is just paint
   "belt": "OWWO",                      // units riding the belt at the start
   "truckPlaces": [[0, -0.35, 90], [0, 7.35, -90]],  // optional, one [x, y, angle] per truck: where its mouth (open end) is and
                                        // which way it faces (90 up, 0 right, -90 down, 180 left). Leave out for an even row under the belt
@@ -61,7 +64,7 @@ It plays every level with the game's own rules and prints one winning tap sequen
 To generate a new solvable level:
 
     node --import ./tools/ts-resolve.mjs tools/make-level.mjs --trucks 6 --colors 3 --capacity 15 \
-      --onbelt 14 --mix 120 --seed 1 > assets/resources/levels/level2.json
+      --onbelt 14 --mix 120 --seed 1 > assets/levels/level2.json
 
 `--mix` = how scrambled, `--onbelt` = blocks that start on the belt, `--minload` = minimum belt
 load once the opening cubes have settled. `--limit` writes `beltLimit` (most blocks allowed on the belt) and builds the level around it.
@@ -79,12 +82,16 @@ The `infinity` belt crosses over itself. A point of `beltPath.points` may carry 
 belt is raised to there (`[x, y, height]`); the belt slopes evenly between points, and cubes ride up and over.
 A height of about 0.75 clears the cubes passing underneath.
 
+`--match` writes `"matchTruckColor": true` and only keeps levels that are solvable under that rule. With
+`matchTruckColor` on, each colour must fill exactly as many trucks as there are trucks of that colour (the check says
+which colour is off); the trucks take their colours from `truckColors`, or from `colors` in turn.
+
 `--palette "M,O,W"` chooses the block colours by letter: M magenta, O orange, W white, B blue, G green,
 Y yellow, R red, C cyan, P purple (one letter per colour; it replaces `--colors`).
 
-**Final levels** live in `assets/resources/FinalLevels` (`horns`, `dog`, `infinity`, `clover`, `spiral`).
+**Final levels** live in `assets/FinalLevels` (`horns`, `dog`, `infinity`, `clover`, `spiral`).
 To play one, set **Level Name** on the Game node to the folder and name, e.g. `FinalLevels/clover`; a
-plain name such as `level3` still loads from `assets/resources/levels`. The check and the tests cover
+plain name such as `level3` still loads from `assets/levels`. The check and the tests cover
 both folders.
 
 Rule tests: `node --import ./tools/ts-resolve.mjs --test tests/*.test.ts`
@@ -143,6 +150,6 @@ A new network is one entry in `tools/playable/networks.mjs`. The game reaches th
 `window.playableAd` (`cta`, `ready`, `end`, `level`), read in `assets/scripts/game/AdBridge.ts`.
 
 **Start-up time.** The sounds are not part of the scene: `SoundManager` loads `music`, `pop`, `cube`, `click`,
-`win`, `fail`, `ui`, `complete` and `confetti` (.mp3) from `assets/resources/audio` a moment after the level
+`win`, `fail`, `ui`, `complete` and `confetti` (.mp3) from `assets/audio` a moment after the level
 appears. To change a sound, replace the file and keep its name. Keep textures small (the logo is 823 x 526)
 and do not put audio clips or large images straight into the scene, or the start slows down again.

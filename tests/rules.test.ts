@@ -116,10 +116,28 @@ test('isWon only when the belt is empty and every truck is full of one colour', 
   assert.equal(isWon(createState(mk({ truckCapacity: 2, trucks: ['MM', ''] }), [0, 2])), false);
   assert.equal(isWon(createState(mk({ truckCapacity: 2, trucks: ['MM', 'OO'], belt: 'W' }), [0, 2])), false);
 });
-test('isLost when settled, not won, and the belt is full', () => {
+test('isLost at once when the belt is full and no block on it can drop into a truck', () => {
   const s = createState(mk({ trucks: ['MMOO', 'OOMM'], beltCapacity: 2, belt: 'WW' }), [0, 1]);
+  assert.equal(isLost(s), true);
+});
+test('not lost while the belt is full but a block on it can still drop into a truck', () => {
+  const s = createState(mk({ trucks: ['MMO', 'OOMM'], beltCapacity: 2, belt: 'OW' }), [0, 1]);
+  assert.equal(canTap(s, 0), false);
   assert.equal(isLost(s), false);
-  run(s, 2);
+  run(s, 4);
+  assert.deepEqual(s.trucks[0], ['M', 'M', 'O', 'O']);
+});
+test('not lost while the belt has room for a tap', () => {
+  const s = createState(mk({ trucks: ['MMOO', 'OOMM'], beltCapacity: 3, belt: 'WW' }), [0, 1]);
+  assert.equal(isLost(s), false);
+});
+test('beltLimit counts as full for losing', () => {
+  const s = createState(mk({ trucks: ['MMOO', 'OOMM'], beltCapacity: 4, beltLimit: 2, belt: 'WW' }), [0, 2]);
+  assert.equal(isLost(s), true);
+});
+test('matchTruckColor: lost when the only matching tops belong to trucks of another colour', () => {
+  // Truck 0 is M with an O on top: under the colour rule it will not take the O block.
+  const s = createState(mk({ matchTruckColor: true, trucks: ['MMO', 'OOMM'], beltCapacity: 2, belt: 'OW' }), [0, 1]);
   assert.equal(isLost(s), true);
 });
 test('validateLevel explains a missing belt or incomplete beltPath instead of crashing later', () => {
@@ -230,4 +248,44 @@ test('a tapped run longer than the gap to the next truck still all drops into th
   run(s, 3);
   assert.deepEqual(s.trucks[1], ['O', 'O', 'O', 'O', 'O']);
   assert.equal(load(s), 0);
+});
+
+test('matchTruckColor: a truck only takes blocks of its own colour', () => {
+  // Truck 0 is M (first colour), truck 1 is O. An O block passes truck 0 even though its top is O.
+  const s = createState(mk({ matchTruckColor: true, trucks: ['MO', 'OM'], belt: 'O' }), [0, 3]);
+  assert.deepEqual(run(s, 12), []);
+  assert.equal(load(s), 1);
+});
+test('matchTruckColor: an empty truck only takes its own colour', () => {
+  const s = createState(mk({ matchTruckColor: true, trucks: ['', 'WM'], belt: 'O' }), [0, 3]);
+  run(s, 12);
+  assert.deepEqual(s.trucks[0], []);
+  const t = createState(mk({ matchTruckColor: true, truckColors: ['O', 'M'], trucks: ['', 'WM'], belt: 'O' }), [0, 3]);
+  run(t, 12);
+  assert.deepEqual(t.trucks[0], ['O']);
+});
+test('matchTruckColor: a truck full of another colour is not complete', () => {
+  const l = mk({ matchTruckColor: true, truckCapacity: 2, trucks: ['OO', 'MM'] });
+  const s = createState(l, [0, 2]);
+  assert.equal(isComplete(s, 0), false);
+  assert.equal(isWon(s), false);
+  assert.equal(isWon(createState({ ...l, truckColors: ['O', 'M'] }, [0, 2])), true);
+});
+test('without matchTruckColor the truck colour is only cosmetic', () => {
+  const s = createState(mk({ truckCapacity: 2, truckColors: ['M', 'O'], trucks: ['OO', 'MM'] }), [0, 2]);
+  assert.equal(isWon(s), true);
+});
+test('matchTruckColor: fillProblem wants each colour to fill its own trucks', () => {
+  assert.match(fillProblem(mk({ matchTruckColor: true, truckCapacity: 2, trucks: ['MM', 'MM', 'OO'] })) || '', /matchTruckColor/);
+  assert.equal(fillProblem(mk({ matchTruckColor: true, truckCapacity: 2, trucks: ['MM', 'OO'] })), null);
+});
+test('matchTruckColor: freeStart ignores trucks of another colour', () => {
+  assert.deepEqual(freeStart(mk({ matchTruckColor: true, truckCapacity: 4, trucks: ['MO', ''], belt: 'W' })), []);
+  assert.deepEqual(freeStart(mk({ matchTruckColor: true, truckCapacity: 4, trucks: ['MO', 'OO', ''], belt: 'W' })), [{ color: 'W', truck: 2 }]);
+});
+test('validateLevel rejects a bad matchTruckColor or truckColors', () => {
+  assert.throws(() => validateLevel(mk({ trucks: ['M'], matchTruckColor: 'yes' as any })), /matchTruckColor/);
+  assert.throws(() => validateLevel(mk({ trucks: ['M', 'O'], truckColors: ['M'] })), /truckColors/);
+  assert.throws(() => validateLevel(mk({ trucks: ['M'], matchTruckColor: true, truckColors: ['#123456'] })), /truckColors/);
+  validateLevel(mk({ trucks: ['M'], truckColors: ['#123456'] }));
 });

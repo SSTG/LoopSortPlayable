@@ -1,5 +1,5 @@
 import type { LevelData } from './Level';
-import { beltLimit } from './Level';
+import { beltLimit, truckColor, matchesTruckColor } from './Level';
 
 export function validateLevel(l: LevelData): void {
   if (!l.trucks || l.trucks.length === 0) throw new Error('Level needs at least one truck');
@@ -31,6 +31,15 @@ export function validateLevel(l: LevelData): void {
   const check = (str: string, what: string) => {
     for (const c of str) if (!l.colors[c]) throw new Error(`${what} uses colour "${c}" which is not in colors`);
   };
+  if (l.matchTruckColor !== undefined && typeof l.matchTruckColor !== 'boolean') throw new Error('matchTruckColor must be true or false');
+  if (l.truckColors !== undefined) {
+    if (!Array.isArray(l.truckColors) || l.truckColors.length !== l.trucks.length) throw new Error(`truckColors needs one colour per truck (${l.trucks.length})`);
+    // With matchTruckColor the colour is a rule, so it must be a colour letter; otherwise a hex code is allowed too.
+    l.truckColors.forEach((c, i) => {
+      const ok = typeof c === 'string' && (!!l.colors[c] || (!matchesTruckColor(l) && /^#[0-9a-fA-F]{6}$/.test(c)));
+      if (!ok) throw new Error(`truckColors entry ${i + 1} ("${c}") is not a colour in colors`);
+    });
+  }
   l.trucks.forEach((t, i) => {
     if (typeof t !== 'string') throw new Error(`Truck ${i + 1} must be a string of colour letters`);
     if (t.length > l.truckCapacity) throw new Error(`Truck ${i + 1} holds ${t.length} units, truckCapacity is ${l.truckCapacity}`);
@@ -49,7 +58,7 @@ export function freeStart(l: LevelData): { color: string; truck: number }[] {
   for (const color of l.belt) {
     if (seen[color]) continue;
     seen[color] = true;
-    const truck = l.trucks.findIndex(t => t.length < l.truckCapacity && (t.length === 0 || t[t.length - 1] === color));
+    const truck = l.trucks.findIndex((t, i) => (!matchesTruckColor(l) || truckColor(l, i) === color) && t.length < l.truckCapacity && (t.length === 0 || t[t.length - 1] === color));
     if (truck >= 0) out.push({ color, truck });
   }
   return out;
@@ -65,5 +74,14 @@ export function fillProblem(l: LevelData): string | null {
     loads += count[c] / l.truckCapacity;
   }
   if (loads !== l.trucks.length) return `the blocks fill ${loads} of ${l.trucks.length} trucks: every truck must end up full`;
+  if (matchesTruckColor(l)) {
+    // Each truck only takes its own colour, so every colour must fill exactly the trucks of that colour.
+    const want: Record<string, number> = {};
+    l.trucks.forEach((_, i) => { const c = truckColor(l, i); want[c] = (want[c] || 0) + 1; });
+    for (const c of Object.keys(l.colors)) {
+      const have = (count[c] || 0) / l.truckCapacity, need = want[c] || 0;
+      if (have !== need) return `matchTruckColor: the "${c}" blocks fill ${have} trucks but ${need} trucks are "${c}" (set truckColors to match)`;
+    }
+  }
   return null;
 }

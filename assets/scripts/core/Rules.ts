@@ -1,5 +1,5 @@
 import type { LevelData } from './Level';
-import { beltLimit } from './Level';
+import { beltLimit, truckColor, matchesTruckColor } from './Level';
 import { validateLevel } from './LevelCheck';
 
 export * from './Level';
@@ -81,7 +81,8 @@ export function isWon(s: GameState): boolean {
 
 export function isComplete(s: GameState, truck: number): boolean {
   const t = s.trucks[truck];
-  return !!t && t.length >= s.level.truckCapacity && topRun(t) === t.length;
+  if (!t || t.length < s.level.truckCapacity || topRun(t) !== t.length) return false;
+  return !matchesTruckColor(s.level) || t[0] === truckColor(s.level, truck);
 }
 
 export function canTap(s: GameState, truck: number): boolean {
@@ -96,6 +97,7 @@ export function tapCount(s: GameState, truck: number): number {
 }
 
 function accepts(s: GameState, truck: number, color: string): boolean {
+  if (matchesTruckColor(s.level) && color !== truckColor(s.level, truck)) return false;
   const t = s.trucks[truck];
   if (t.length >= s.level.truckCapacity) return false;
   return t.length === 0 || t[t.length - 1] === color;
@@ -151,8 +153,20 @@ export function isSettled(s: GameState): boolean {
   return s.quiet >= s.ring.length;
 }
 
+// Whether some block on the belt would still drop into some truck. The belt carries every block past every truck,
+// so if none can drop now, none ever will until the player taps.
+export function canDrop(s: GameState): boolean {
+  for (const color of s.ring) {
+    if (!color) continue;
+    for (let i = 0; i < s.trucks.length; i++) if (accepts(s, i, color)) return true;
+  }
+  return false;
+}
+
+// Lost: not won, no truck can be tapped (the belt is at its limit) and no block on the belt can drop into a truck.
+// Nothing can change any more, so this is known at once, without waiting for the belt to go round.
 export function isLost(s: GameState): boolean {
-  if (!isSettled(s) || isWon(s)) return false;
+  if (isWon(s)) return false;
   for (let i = 0; i < s.trucks.length; i++) if (canTap(s, i)) return false;
-  return true;
+  return !canDrop(s);
 }

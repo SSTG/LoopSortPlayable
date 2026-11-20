@@ -4,6 +4,7 @@
   "background": "#14004A",
   "zoom": 1.01,
   "tapsToRedirect": -1,
+  "matchTruckColor": false,
   "truckCapacity": 8,
   "beltCapacity": 23,
   "beltLimit": 18,

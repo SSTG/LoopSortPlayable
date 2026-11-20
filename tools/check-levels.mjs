@@ -5,14 +5,17 @@ import { validateLevel, freeStart, fillProblem } from '../assets/scripts/core/Ru
 import { buildLayout, beltFits, beltCapacityFor } from '../assets/scripts/core/Layout.ts';
 import { solve } from '../assets/scripts/core/Solver.ts';
 
-const res = join(dirname(fileURLToPath(import.meta.url)), '../assets/resources');
+const res = join(dirname(fileURLToPath(import.meta.url)), '../assets');
 const dirs = ['levels', 'FinalLevels'].map(d => join(res, d));
 const files = process.argv.length > 2 ? process.argv.slice(2) : dirs.flatMap(dir => readdirSync(dir).filter(f => f.endsWith('.json')).map(f => join(dir, f)));
+// Final levels (the ones shipped as ads) must fit on a phone screen: no more than this many trucks.
+const FINAL_MAX_TRUCKS = 6;
 let bad = 0;
 for (const f of files) {
   try {
     const level = JSON.parse(readFileSync(f, 'utf8'));
     validateLevel(level);
+    if (/FinalLevels/.test(f) && level.trucks.length > FINAL_MAX_TRUCKS) throw new Error(`final levels may have at most ${FINAL_MAX_TRUCKS} trucks, this one has ${level.trucks.length}`);
     if (!beltFits(level)) throw new Error(`beltCapacity ${level.beltCapacity} does not suit this belt's length: a full belt must look full, use about ${beltCapacityFor(level.beltPath)}`);
     const fill = fillProblem(level);
     if (fill) throw new Error(fill);
